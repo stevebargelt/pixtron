@@ -1,0 +1,71 @@
+__pycache__/
+.venv/
+.env
+out/
+cache/
+*.pyc
+*.pyo
+.DS_Store
+
+# Logs
+logs/
+*.log
+web-admin/node_modules/
+web-admin/.next/
+web-admin/.env.local
+web-admin/.vercel
+web-admin/tsconfig.tsbuildinfo
+
+node_modules/
+CLAUDE.local.md
+
+# Generated assets (logos, team data)
+# These are fetched via scripts to avoid trademark issues
+assets/
+!assets/.gitkeep
+# Keep pixel fonts for scoreboard rendering
+!assets/fonts/
+!assets/fonts/pixel/
+!assets/fonts/pixel/*.TTF
+!assets/fonts/pixel/*.ttf
+!assets/fonts/pixel/*.otf
+
+# Web admin preview assets (fonts copied, logos symlinked)
+!web-admin/public/assets/
+!web-admin/public/assets/fonts/
+!web-admin/public/assets/fonts/pixel/
+!web-admin/public/assets/fonts/pixel/*.TTF
+!web-admin/public/assets/fonts/pixel/*.otf
+!web-admin/public/assets/logos
+!web-admin/public/assets/nhl_logos
+
+# Test coverage and reports (don't track generated artifacts)
+coverage/
+**/coverage/
+**/lcov-report/
+web-admin/coverage/
+coverage*.html
+coverage*.xml
+*.coverage
+
+# Supabase CLI temp files
+supabase/**/.temp/
+web-admin/supabase/.temp/
+supabase/supabase/.temp/
+.coverage
+
+plans/
+
+# forge — per-developer claude-code config (machine-local, not committed)
+.claude/settings.local.json
+.claude/commands/
+
+# Watchman temp cookies (never commit)
+.watchman-cookie-*
+
+# beads tracker state (using forge backlog / BACKLOG.md here)
+.beads/
+
+# CLI / runtime scratch
+supabase/.temp/
+.runtime/
