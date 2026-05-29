@@ -18,32 +18,32 @@ The `fetch_nhl_assets.py` script requires `cairosvg` which needs the `libcairo2-
 ### BL-005: WNBA teams parser reads venue but ESPN doesn't include it — CLOSED 2026-05-27
 
 ## Notes for next session
-**Last session ended 2026-05-28 (long session — full web-admin redesign + 4 device-side Go fixes).**
+**Session ended 2026-05-29 — PROJECT RENAMED to Pixtron + #14 shipped.**
 
-**Where we left off:** Shipped 11 commits (e62fc83 -> b21e689), all LOCAL (push hold). The web-admin redesign is COMPLETE and visually swept via browser-tools (authed, both themes). Device-side Go: #6 Python removal, #7 poll backoff, #9 brightness/timezone, #13 heartbeat, #19 final-state — all built + verified (locally where possible).
+**WORK FROM ~/code/pixtron NOW.** This repo is the canonical trunk: github.com/stevebargelt/pixtron (PUBLIC, fresh history). Old wnba-led-scoreboard repo is ARCHIVED (read-only backup); old local dir ~/code/wnba-led-scoreboard is a backup, safe to delete. Pi re-homed to ~/pixtron on main.
 
-**Picked up next (open tickets, rough priority):**
-1. #14 — reorder favorite teams. Full-stack: UI up/down or drag + RPC store priority-by-index (migration 005 currently writes priority=999 flat) + Go must honor favorite order in SelectGame (today favorites are an unordered set, so reordering is cosmetic until Go changes).
-2. #16 — data-driven leagues / real "Add League". Go uses a STATIC fetcher registry (wnba/nhl only) in internal/sports/aggregator.go; leagues.api_config exists but is unused. ESPN API is uniform so a generic ESPN fetcher could support many leagues. Big: Go + RPC + schema.
-3. #15 — dev/QA auth bypass for web-admin (mock session behind a prod-safe flag, documented in CLAUDE.md). Deferred but bit us repeatedly (can't verify authed screens in containers).
-4. #11/#12 — forge workflow: build phase should route per-discipline specialists (not one generic engineer); request-changes should drive the rationale fix-list. #18 — pre-commit hook reformats repo-wide -> churn. BL-006 likely moot post-#6.
+**Shipped this session:**
+- #14 favorite reorder DONE end-to-end: migration 006 persists priority=array index (APPLIED to Supabase via CLI); Go SelectGame is rank-aware (rank breaks ties within state tier — live>pregame>final) with unit tests; dnd-kit drag-to-reorder UI with ordinals+grip+keyboard a11y; reorder E2E. All built + host-verified.
+- delete-device feature: DELETE /api/device/[id] (ownership+RLS, 204) + Settings "Danger Zone" type-to-confirm (exact name, trim, case-sensitive) → redirect to dashboard.
+- E2E harness (5 specs, all green on host): auth-smoke, add-device, teams-save, delete-device, reorder-favorites. Programmatic QA login in globalSetup (no forge auth-profile); seededDevice fixture; e2e-* orphan sweep. Run: cd web-admin && npx playwright test (webServer auto-starts; .auth/qa.json regenerated each run).
+- #18 fixed: pre-commit now uses lint-staged (staged-only) — no more repo-wide churn. Also fixed jest picking up e2e specs.
+- FINAL scene label moved to bottom-center (was overlapping away-team row).
+- Pixtron migration: Go module github.com/stevebargelt/pixtron/go-scoreboard; packages pixtron / pixtron-web-admin; purged 836 tracked watchman cookies + machine-local .claude/commands, gitignored.
 
-**External state to remember:**
-- PUSH HOLD STILL ON (Steve, until ~2026-05-29). Branch feat/client-side-preview-v2 is far ahead of origin, never pushed. Do NOT push until Steve confirms. Reconfirm on next session.
-- The Pi must `git pull` + rebuild (`go build -tags matrix`) to get the Go fixes (#7/#9/#13/#19). Until then the real device still shows offline / "4th 0 0" / old brightness — fixes are verified locally, not yet on hardware.
-- #13 heartbeat verified END-TO-END locally (ran `/tmp/scoreboard-hb --sim --env ../.env` vs real Supabase; dashboard stayed Online past 90s; 60s config reloads fire). That binary was stopped, so steve-1 reads Offline again until the Pi runs the fix.
-- is_active catalog data corrected LIVE via service-role PATCH: wnba/nhl=true, nba/mlb/nfl=false. Seed 003 fixed too (commit 3574d5e). Migration 005 (save_device_teams RPC) was applied to Supabase by Steve via SQL editor — saving teams works.
-- Dev server running at localhost:3000 (web-admin, real creds from web-admin/.env). browser-tools Chrome on :9222 with Steve's profile, AUTHED — this authed session is the workaround for #15; use it to verify authed screens (browser-nav/eval/screenshot scripts in ~/.claude/skills/browser-tools/).
-- DEVICE_ID steve-1 = 6e57af4b-6980-4e61-8ffe-417656114c96.
+**Picked up next (open tickets):**
+1. #15 dev/QA auth bypass — LIKELY CLOSEABLE: programmatic-login E2E harness built + admin dev-bypass live ("Admin check bypassed: development mode"). Confirm + close.
+2. #16 data-driven leagues / generic ESPN fetcher (big: Go aggregator.go has a STATIC fetcher registry wnba/nhl; leagues.api_config unused).
+3. #8 live snapshot from device. #10 admin role + gate catalog. #20 empty-state E2E via a dedicated no-device QA user.
+4. #5 automate Pi deploy (Tailscale + GH Actions) — would replace the manual SSH loop. #11/#12 forge meta. #1 route Go through Forge (blocked).
 
-**Decisions worth not relitigating:**
-- Redesign: 2-tab device page (Teams + Settings); one unified Teams surface; single device-creation path, NO DEVICE_TOKEN; admin role-gated via the EXISTING ADMIN_EMAILS allowlist (not a new role system); inert controls removed. "Add League" removed (inert until #16). is_active = "supported & offered" (only leagues with a Go fetcher).
-- Forge specialist gotchas: generic-engineer (not frontend-specialist) drops frontend craft (#11); pre-commit hook reformats repo-wide -> revert churn with `git checkout HEAD -- <files>` (#18); specialists leak a placeholder web-admin/.env.local that breaks local login (delete it; real creds in web-admin/.env). Trivial confirmed fixes were done direct-edit + browser-tools-verified rather than via container.
+**Critical state:**
+- Migrations now via Supabase CLI: `supabase db push` (linked, history reconciled through 006, dry-run first). NO SQL-editor step.
+- Pi: `cd ~/pixtron/go-scoreboard && sudo ./scoreboard-matrix` (needs sudo password — Steve runs it). Device currently OFFLINE (binary not running); rebuilt binary has #14. Logos/assets preserved (gitignored, Pi-only).
+- QA E2E user qa@bargelt.com (confirmed); creds in web-admin/.env as E2E_SUPABASE_EMAIL/PASSWORD (gitignored). DEVICE_ID steve-1 = 6e57af4b-6980-4e61-8ffe-417656114c96. Supabase project ref hvkyzkzcwswfyscsfqsw (unchanged).
+- web-admin dev: cd web-admin && npm run dev (localhost:3000). node_modules restored via npm ci in the new dir.
+- Domains pixtron.io / .dev still available if Steve wants one.
 
-**Shipped this session (11 commits):**
-- e62fc83 #6 remove frozen Python; c82765d #7 poll backoff; b000898 #9 brightness+tz
-- eef5b45 redesign device 2-tab; df9bdd4 foundation; fe90a3e dashboard+onboarding; 7459288 admin+polish; 96cd314 title-contrast fix; 3574d5e #17 hide disabled leagues; 7377c92 #13 heartbeat; b21e689 #19 final-state
-- Tickets filed: #11-#19. Migration 005 applied to Supabase.
+**Decisions — don't relitigate:** fresh history was intentional (old main = stale Gas Town experiment). New repo is PUBLIC (Steve's call). The designs/.pen corpus is a point-in-time baseline — reconcile-later, not per-feature. CLAUDE.md only lightly rebranded (title); a fuller Pixtron pass is optional.
 
 ## Active
 
