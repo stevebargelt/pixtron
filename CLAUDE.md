@@ -4,8 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Multi-League LED Scoreboard** — Displays live sports scores on RGB LED matrices.
-Active live-render path is **Go** (`go-scoreboard/`). Python (`src/`, `app.py`) is **frozen**.
+**Pixtron** — Live multi-league sports scores on RGB LED matrices.
+The live-render app is **Go** (`go-scoreboard/`), running on a Raspberry Pi.
 Web admin (`web-admin/`, Next.js) writes device config to Supabase; the device polls it.
 
 ```
