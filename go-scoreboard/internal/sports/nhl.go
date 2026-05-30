@@ -69,7 +69,8 @@ type nhlPeriodDesc struct {
 }
 
 type nhlClock struct {
-	TimeRemaining string `json:"timeRemaining"`
+	TimeRemaining  string `json:"timeRemaining"`
+	InIntermission bool   `json:"inIntermission"`
 }
 
 func parseNHLGame(g nhlGame) (GameSnapshot, bool) {
@@ -101,6 +102,7 @@ func parseNHLGame(g nhlGame) (GameSnapshot, bool) {
 		Period:       g.PeriodDescriptor.Number,
 		DisplayClock: clock,
 		StatusDetail: g.PeriodDescriptor.PeriodType,
+		Intermission: g.Clock.InIntermission,
 	}, true
 }
 

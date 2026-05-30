@@ -85,6 +85,16 @@ func statusLine(g sports.GameSnapshot) string {
 	if strings.EqualFold(strings.TrimSpace(g.StatusDetail), "halftime") {
 		return "Halftime"
 	}
+	// During an intermission the clock reports the intermission countdown, not
+	// the game clock, while the period still reads the period that just ended.
+	// Keep the countdown but label it with that period (e.g. "2nd Int 17:34")
+	// so it isn't mistaken for game time.
+	if g.Intermission {
+		if name := periodName(g.Period); name != "" {
+			return strings.TrimSpace(name + " Int " + g.DisplayClock)
+		}
+		return strings.TrimSpace("Int " + g.DisplayClock)
+	}
 	return strings.TrimSpace(periodName(g.Period) + " " + g.DisplayClock)
 }
 

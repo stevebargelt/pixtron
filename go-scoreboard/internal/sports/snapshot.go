@@ -56,4 +56,8 @@ type GameSnapshot struct {
 	Period       int
 	DisplayClock string
 	StatusDetail string
+	// Intermission is true when play is paused between periods (e.g. NHL
+	// intermission). The clock then reports the intermission countdown, not the
+	// game clock, so callers must not render it as the in-play period time.
+	Intermission bool
 }
