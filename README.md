@@ -1,6 +1,12 @@
-# Multi-League LED Scoreboard
+<p align="center">
+  <img src="brand/pixtron-wordmark-1344.png" alt="Pixtron" width="640">
+</p>
 
-Display live sports scores on RGB LED matrix panels — WNBA, NHL, NBA, MLB, NFL.
+<h1 align="center">Pixtron</h1>
+
+<p align="center">Live multi-league sports scores on RGB LED matrix panels — WNBA, NHL, NBA, MLB, NFL.</p>
+
+---
 
 This is a multi-tenant product: users sign up, register their own scoreboard devices, and configure each one independently. One panel can show only NHL, another only WNBA, a third a mix of both. Configuration lives in Supabase; each device polls for its own settings and pulls live game data from ESPN / NHL APIs.
 
