@@ -34,7 +34,6 @@ export const CONFIG_SCHEMA = {
     render: {
       type: 'object',
       properties: {
-        live_layout: { type: 'string', enum: ['stacked', 'big-logos'] },
         logo_variant: { type: 'string', enum: ['mini', 'banner'] },
       },
       additionalProperties: true,
@@ -48,6 +47,7 @@ export const CONFIG_SCHEMA = {
           sport: { type: 'string', minLength: 1 },
           enabled: { type: 'boolean' },
           priority: { type: 'integer', minimum: 1 },
+          display_layout: { type: 'string', enum: ['stacked', 'side_by_side'] },
           favorites: {
             type: 'array',
             items: {
