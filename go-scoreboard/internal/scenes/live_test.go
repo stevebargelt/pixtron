@@ -20,12 +20,12 @@ func TestStatusLine(t *testing.T) {
 		{
 			name: "intermission keeps the countdown labeled with the period",
 			game: sports.GameSnapshot{Period: 2, DisplayClock: "17:34", Intermission: true},
-			want: "2nd Int 17:34",
+			want: "Int 2 17:34",
 		},
 		{
-			name: "first intermission labels with 1st",
+			name: "first intermission labels with period 1",
 			game: sports.GameSnapshot{Period: 1, DisplayClock: "16:02", Intermission: true},
-			want: "1st Int 16:02",
+			want: "Int 1 16:02",
 		},
 		{
 			name: "intermission with unknown period falls back to Int",
