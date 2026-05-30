@@ -12,7 +12,8 @@ import (
 )
 
 type LeagueRef struct {
-	Code string `json:"code"`
+	Code   string `json:"code"`
+	Layout string `json:"layout"`
 }
 
 type FavoriteTeam struct {

@@ -166,9 +166,17 @@ type appState struct {
 	refresh     config.RefreshConfig
 	brightness  int
 	loc         *time.Location
+	layouts     map[string]string // league code -> live-view layout
 	games       []sports.GameSnapshot
 	chosen      *sports.GameSnapshot
 }
+
+// Live-view layout values stored in device_config.live_display_layout and
+// surfaced as render_config.live_layout. Unknown values fall back to stacked.
+const (
+	layoutStacked    = "stacked"
+	layoutSideBySide = "side_by_side"
+)
 
 func newAppState(assetsDir, demoLeagues string) *appState {
 	s := &appState{
@@ -203,8 +211,10 @@ func (s *appState) reloadConfig() bool {
 		return false
 	}
 	leagues := make([]string, 0, len(cfg.EnabledLeagues))
+	layouts := make(map[string]string, len(cfg.EnabledLeagues))
 	for _, l := range cfg.EnabledLeagues {
 		leagues = append(leagues, l.Code)
+		layouts[l.Code] = l.Layout
 	}
 	// The config RPC returns favorites already ordered by priority, so a team's
 	// index in the slice is its rank (0 = top favorite). SelectGame honors it.
@@ -224,6 +234,7 @@ func (s *appState) reloadConfig() bool {
 	s.refresh = cfg.Refresh
 	s.brightness = cfg.Matrix.Brightness
 	s.loc = loc
+	s.layouts = layouts
 	s.mu.Unlock()
 	log.Printf("config: %d leagues (%v), refresh pre=%ds in=%ds fin=%ds, brightness=%d, tz=%s",
 		len(leagues), leagues, cfg.Refresh.PregameSec, cfg.Refresh.IngameSec, cfg.Refresh.FinalSec, cfg.Matrix.Brightness, loc)
@@ -279,6 +290,10 @@ func (s *appState) currentScene() scenes.Scene {
 	chosen := s.chosen
 	assetsDir := s.assetsDir
 	loc := s.loc
+	var layout string
+	if chosen != nil {
+		layout = s.layouts[chosen.League]
+	}
 	s.mu.RUnlock()
 	if chosen == nil {
 		return scenes.Idle{Loc: loc}
@@ -287,6 +302,9 @@ func (s *appState) currentScene() scenes.Scene {
 	case sports.StatePre:
 		return scenes.Pregame{Game: *chosen, AssetsDir: assetsDir, Loc: loc}
 	case sports.StateLive:
+		if layout == layoutSideBySide {
+			return scenes.LiveBig{Game: *chosen, AssetsDir: assetsDir}
+		}
 		return scenes.Live{Game: *chosen, AssetsDir: assetsDir}
 	case sports.StateFinal:
 		return scenes.Final{Game: *chosen, AssetsDir: assetsDir}
@@ -416,7 +434,11 @@ func printDeviceConfig(cfg *config.DeviceConfig) {
 		cfg.Refresh.PregameSec, cfg.Refresh.IngameSec, cfg.Refresh.FinalSec)
 	fmt.Printf("Leagues:  %d enabled\n", len(cfg.EnabledLeagues))
 	for _, l := range cfg.EnabledLeagues {
-		fmt.Printf("  - %s\n", l.Code)
+		layout := l.Layout
+		if layout == "" {
+			layout = layoutStacked
+		}
+		fmt.Printf("  - %s (layout=%s)\n", l.Code, layout)
 	}
 	fmt.Printf("Favorites:\n")
 	for league, teams := range cfg.FavoriteTeams {
