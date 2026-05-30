@@ -26,34 +26,38 @@ func (lb LiveBig) Render(width, height int, _ time.Time) *image.RGBA {
 	if err != nil {
 		return img
 	}
+	scoreFace, err := render.Face(render.Font04B24, 11)
+	if err != nil {
+		return img
+	}
 
-	statusColor := color.RGBA{R: 200, G: 200, B: 200, A: 255}
+	statusColor := color.RGBA{R: 0, G: 220, B: 0, A: 255} // green, matches the stacked scene
 	abbrColor := color.RGBA{R: 220, G: 220, B: 220, A: 255}
 	scoreColor := color.RGBA{R: 255, G: 255, B: 255, A: 255}
 
-	render.DrawText(img, statusLine(lb.Game), smallFace, statusColor, width/2, 7, render.AlignCenter)
-
 	const (
-		logoW        = 20
-		logoH        = 20
-		logoY        = 8
-		abbrY        = 31
-		homeLogoLeft = 1
+		logoW = 16
+		logoH = 16
+		logoY = 1
+		abbrY = 24
 	)
-	awayLogoLeft := width - logoW - 1
+	awayLogoLeft := 1
+	homeLogoLeft := width - logoW - 1
 
-	// Home logo + abbr on left, away on right (matches Python live_big convention).
-	pasteLogo(img, render.Logo(lb.AssetsDir, lb.Game.Home.ID, render.LogoBanner), homeLogoLeft, logoY, logoW, logoH)
+	// Away on the left, home on the right (away @ home).
 	pasteLogo(img, render.Logo(lb.AssetsDir, lb.Game.Away.ID, render.LogoBanner), awayLogoLeft, logoY, logoW, logoH)
+	pasteLogo(img, render.Logo(lb.AssetsDir, lb.Game.Home.ID, render.LogoBanner), homeLogoLeft, logoY, logoW, logoH)
 
-	render.DrawText(img, lb.Game.Home.Abbr, smallFace, abbrColor, homeLogoLeft+logoW/2, abbrY, render.AlignCenter)
 	render.DrawText(img, lb.Game.Away.Abbr, smallFace, abbrColor, awayLogoLeft+logoW/2, abbrY, render.AlignCenter)
+	render.DrawText(img, lb.Game.Home.Abbr, smallFace, abbrColor, homeLogoLeft+logoW/2, abbrY, render.AlignCenter)
 
+	// Scores, larger, in the wide center gap between the logos.
 	mid := width / 2
-	hs := fmt.Sprintf("%d", lb.Game.Home.Score)
-	as := fmt.Sprintf("%d", lb.Game.Away.Score)
-	render.DrawText(img, hs, smallFace, scoreColor, mid-3, 20, render.AlignRight)
-	render.DrawText(img, as, smallFace, scoreColor, mid+3, 20, render.AlignLeft)
+	render.DrawText(img, fmt.Sprintf("%d", lb.Game.Away.Score), scoreFace, scoreColor, mid-2, 14, render.AlignRight)
+	render.DrawText(img, fmt.Sprintf("%d", lb.Game.Home.Score), scoreFace, scoreColor, mid+2, 14, render.AlignLeft)
+
+	// Period + clock at the bottom in green, matching the stacked scene.
+	render.DrawText(img, statusLine(lb.Game), smallFace, statusColor, width/2, height-1, render.AlignCenter)
 
 	return img
 }
