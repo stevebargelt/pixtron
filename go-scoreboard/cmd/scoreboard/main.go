@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -41,6 +43,8 @@ func main() {
 	envFile := flag.String("env", "../.env", "path to .env file (existing vars take precedence)")
 	assetsDir := flag.String("assets-dir", "../assets", "path to assets directory (for team logos)")
 	demoLeagues := flag.String("demo-leagues", "", "comma-separated leagues to use without Supabase (e.g. \"wnba,nhl\")")
+	demoLiveBig := flag.Bool("demo-live-big", false, "render a synthetic live side_by_side game (dev: preview LiveBig with no live game; no network)")
+	demoScores := flag.String("demo-scores", "88,92", "away,home scores for --demo-live-big (e.g. \"101,109\")")
 	flag.Parse()
 
 	if err := config.LoadEnvFile(*envFile); err != nil {
@@ -105,6 +109,10 @@ func main() {
 	defer d.Close()
 
 	state := newAppState(*assetsDir, *demoLeagues)
+	if *demoLiveBig {
+		away, home := parseDemoScores(*demoScores)
+		state.enableDemoLiveBig(away, home)
+	}
 	state.reloadConfig()
 	d.SetBrightness(state.currentBrightness())
 	state.refreshGames()
@@ -169,6 +177,43 @@ type appState struct {
 	layouts     map[string]string // league code -> live-view layout
 	games       []sports.GameSnapshot
 	chosen      *sports.GameSnapshot
+	demoLiveBig bool // dev: pin a synthetic live side_by_side game, skip all network
+}
+
+// enableDemoLiveBig pins a fixed live side_by_side game so the LiveBig scene can
+// be previewed on hardware without a real live game. It disables config/game
+// fetching so the synthetic game is never overwritten.
+func (s *appState) enableDemoLiveBig(awayScore, homeScore int) {
+	g := sports.GameSnapshot{
+		League:       "wnba",
+		State:        sports.StateLive,
+		Away:         sports.Team{ID: "16", Abbr: "WSH", Score: awayScore},
+		Home:         sports.Team{ID: "131935", Abbr: "TOR", Score: homeScore},
+		Period:       3,
+		DisplayClock: "5:43",
+	}
+	s.mu.Lock()
+	s.demoLiveBig = true
+	s.leagues = []string{"wnba"}
+	s.layouts = map[string]string{"wnba": layoutSideBySide}
+	s.chosen = &g
+	s.games = []sports.GameSnapshot{g}
+	s.mu.Unlock()
+}
+
+// parseDemoScores parses an "away,home" string into two scores, falling back to
+// 88,92 on any malformed input.
+func parseDemoScores(s string) (int, int) {
+	parts := splitCSV(s)
+	if len(parts) != 2 {
+		return 88, 92
+	}
+	a, err1 := strconv.Atoi(strings.TrimSpace(parts[0]))
+	h, err2 := strconv.Atoi(strings.TrimSpace(parts[1]))
+	if err1 != nil || err2 != nil {
+		return 88, 92
+	}
+	return a, h
 }
 
 // Live-view layout values stored in device_config.live_display_layout and
@@ -199,6 +244,9 @@ func newAppState(assetsDir, demoLeagues string) *appState {
 // set of enabled leagues changed, so the caller can refetch games without
 // re-hitting the sports APIs on every reload.
 func (s *appState) reloadConfig() bool {
+	if s.demoLiveBig {
+		return false
+	}
 	if s.demoLeagues != nil {
 		s.mu.Lock()
 		s.leagues = s.demoLeagues
@@ -259,6 +307,9 @@ func sameLeagues(a, b []string) bool {
 }
 
 func (s *appState) refreshGames() {
+	if s.demoLiveBig {
+		return
+	}
 	s.mu.RLock()
 	leagues := append([]string{}, s.leagues...)
 	favs := s.favorites
