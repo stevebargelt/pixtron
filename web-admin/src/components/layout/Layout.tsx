@@ -25,10 +25,7 @@ export function Layout({ children }: LayoutProps) {
       <div className="flex flex-col flex-1 lg:pl-64 min-w-0">
         <Header onMobileMenuToggle={() => setMobileSidebarOpen(true)} />
 
-        <main
-          id="main-content"
-          className="flex-1 p-4 lg:p-8"
-        >
+        <main id="main-content" className="flex-1 p-4 lg:p-8">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>

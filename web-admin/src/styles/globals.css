@@ -4,39 +4,39 @@
 
 /* ── Design tokens: light (default) ── */
 :root {
-  --color-bg: #F5F7FA;
-  --color-surface: #FFFFFF;
-  --color-surface-2: #EEF1F5;
-  --color-surface-3: #F8FAFC;
-  --color-border: #E2E6EC;
-  --color-border-strong: #CBD2DC;
+  --color-bg: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef1f5;
+  --color-surface-3: #f8fafc;
+  --color-border: #e2e6ec;
+  --color-border-strong: #cbd2dc;
   --color-text-primary: #101826;
   --color-text-secondary: #586172;
-  --color-text-muted: #828C9C;
-  --color-accent: #2563EB;
-  --color-accent-hover: #1D4ED8;
-  --color-accent-fg: #FFFFFF;
-  --color-accent-soft: #E8F0FE;
-  --color-accent-soft-fg: #1E40AF;
-  --color-success: #16A34A;
-  --color-success-soft: #E6F6EC;
-  --color-success-fg: #0B7A33;
-  --color-success-dot: #22C55E;
-  --color-danger: #DC2626;
-  --color-danger-hover: #B91C1C;
-  --color-danger-soft: #FCEBEB;
-  --color-danger-fg: #FFFFFF;
-  --color-amber: #C2780A;
-  --color-amber-soft: #FBF0DA;
+  --color-text-muted: #828c9c;
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-accent-fg: #ffffff;
+  --color-accent-soft: #e8f0fe;
+  --color-accent-soft-fg: #1e40af;
+  --color-success: #16a34a;
+  --color-success-soft: #e6f6ec;
+  --color-success-fg: #0b7a33;
+  --color-success-dot: #22c55e;
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-danger-soft: #fcebeb;
+  --color-danger-fg: #ffffff;
+  --color-amber: #c2780a;
+  --color-amber-soft: #fbf0da;
   --color-amber-fg: #825104;
-  --color-offline-dot: #94A3B8;
-  --color-league-wnba: #E8650E;
-  --color-league-wnba-soft: #FCEADD;
-  --color-league-wnba-fg: #FFFFFF;
-  --color-league-nhl: #1D4ED8;
-  --color-league-nhl-soft: #E7EEFC;
-  --color-league-nhl-fg: #FFFFFF;
-  --color-shadow: #1018281F;
+  --color-offline-dot: #94a3b8;
+  --color-league-wnba: #e8650e;
+  --color-league-wnba-soft: #fceadd;
+  --color-league-wnba-fg: #ffffff;
+  --color-league-nhl: #1d4ed8;
+  --color-league-nhl-soft: #e7eefc;
+  --color-league-nhl-fg: #ffffff;
+  --color-shadow: #1018281f;
   --radius-card: 16px;
   --radius-md: 10px;
   --radius-sm: 8px;
@@ -45,76 +45,76 @@
 
 /* ── Design tokens: explicit dark override ── */
 [data-theme='dark'] {
-  --color-bg: #0E1217;
-  --color-surface: #161B22;
-  --color-surface-2: #1C222B;
-  --color-surface-3: #222A34;
-  --color-border: #2A313C;
-  --color-border-strong: #3A4350;
-  --color-text-primary: #EDF1F6;
-  --color-text-secondary: #A7B1C0;
-  --color-text-muted: #6E7888;
-  --color-accent: #4C84F5;
-  --color-accent-hover: #6A9AF8;
-  --color-accent-fg: #08111F;
-  --color-accent-soft: #16243E;
-  --color-accent-soft-fg: #B8CEFB;
-  --color-success: #2FB866;
-  --color-success-soft: #11281B;
-  --color-success-fg: #7BE3A6;
-  --color-success-dot: #34D27B;
-  --color-danger: #EF5350;
-  --color-danger-hover: #F2706E;
-  --color-danger-soft: #2E1718;
-  --color-danger-fg: #1A0809;
-  --color-amber: #E7A33A;
-  --color-amber-soft: #2C2310;
-  --color-amber-fg: #F4D9A6;
-  --color-offline-dot: #5A6678;
-  --color-league-wnba: #F2802F;
-  --color-league-wnba-soft: #2E1C10;
-  --color-league-wnba-fg: #1A0E04;
-  --color-league-nhl: #5B8DEF;
-  --color-league-nhl-soft: #14233E;
-  --color-league-nhl-fg: #06101F;
+  --color-bg: #0e1217;
+  --color-surface: #161b22;
+  --color-surface-2: #1c222b;
+  --color-surface-3: #222a34;
+  --color-border: #2a313c;
+  --color-border-strong: #3a4350;
+  --color-text-primary: #edf1f6;
+  --color-text-secondary: #a7b1c0;
+  --color-text-muted: #6e7888;
+  --color-accent: #4c84f5;
+  --color-accent-hover: #6a9af8;
+  --color-accent-fg: #08111f;
+  --color-accent-soft: #16243e;
+  --color-accent-soft-fg: #b8cefb;
+  --color-success: #2fb866;
+  --color-success-soft: #11281b;
+  --color-success-fg: #7be3a6;
+  --color-success-dot: #34d27b;
+  --color-danger: #ef5350;
+  --color-danger-hover: #f2706e;
+  --color-danger-soft: #2e1718;
+  --color-danger-fg: #1a0809;
+  --color-amber: #e7a33a;
+  --color-amber-soft: #2c2310;
+  --color-amber-fg: #f4d9a6;
+  --color-offline-dot: #5a6678;
+  --color-league-wnba: #f2802f;
+  --color-league-wnba-soft: #2e1c10;
+  --color-league-wnba-fg: #1a0e04;
+  --color-league-nhl: #5b8def;
+  --color-league-nhl-soft: #14233e;
+  --color-league-nhl-fg: #06101f;
   --color-shadow: #00000066;
 }
 
 /* ── Design tokens: OS dark preference (when no explicit data-theme override) ── */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --color-bg: #0E1217;
-    --color-surface: #161B22;
-    --color-surface-2: #1C222B;
-    --color-surface-3: #222A34;
-    --color-border: #2A313C;
-    --color-border-strong: #3A4350;
-    --color-text-primary: #EDF1F6;
-    --color-text-secondary: #A7B1C0;
-    --color-text-muted: #6E7888;
-    --color-accent: #4C84F5;
-    --color-accent-hover: #6A9AF8;
-    --color-accent-fg: #08111F;
-    --color-accent-soft: #16243E;
-    --color-accent-soft-fg: #B8CEFB;
-    --color-success: #2FB866;
-    --color-success-soft: #11281B;
-    --color-success-fg: #7BE3A6;
-    --color-success-dot: #34D27B;
-    --color-danger: #EF5350;
-    --color-danger-hover: #F2706E;
-    --color-danger-soft: #2E1718;
-    --color-danger-fg: #1A0809;
-    --color-amber: #E7A33A;
-    --color-amber-soft: #2C2310;
-    --color-amber-fg: #F4D9A6;
-    --color-offline-dot: #5A6678;
-    --color-league-wnba: #F2802F;
-    --color-league-wnba-soft: #2E1C10;
-    --color-league-wnba-fg: #1A0E04;
-    --color-league-nhl: #5B8DEF;
-    --color-league-nhl-soft: #14233E;
-    --color-league-nhl-fg: #06101F;
+    --color-bg: #0e1217;
+    --color-surface: #161b22;
+    --color-surface-2: #1c222b;
+    --color-surface-3: #222a34;
+    --color-border: #2a313c;
+    --color-border-strong: #3a4350;
+    --color-text-primary: #edf1f6;
+    --color-text-secondary: #a7b1c0;
+    --color-text-muted: #6e7888;
+    --color-accent: #4c84f5;
+    --color-accent-hover: #6a9af8;
+    --color-accent-fg: #08111f;
+    --color-accent-soft: #16243e;
+    --color-accent-soft-fg: #b8cefb;
+    --color-success: #2fb866;
+    --color-success-soft: #11281b;
+    --color-success-fg: #7be3a6;
+    --color-success-dot: #34d27b;
+    --color-danger: #ef5350;
+    --color-danger-hover: #f2706e;
+    --color-danger-soft: #2e1718;
+    --color-danger-fg: #1a0809;
+    --color-amber: #e7a33a;
+    --color-amber-soft: #2c2310;
+    --color-amber-fg: #f4d9a6;
+    --color-offline-dot: #5a6678;
+    --color-league-wnba: #f2802f;
+    --color-league-wnba-soft: #2e1c10;
+    --color-league-wnba-fg: #1a0e04;
+    --color-league-nhl: #5b8def;
+    --color-league-nhl-soft: #14233e;
+    --color-league-nhl-fg: #06101f;
     --color-shadow: #00000066;
   }
 }
@@ -122,7 +122,12 @@
 @layer base {
   html {
     @apply antialiased;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family:
+      'Inter',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      sans-serif;
   }
 
   body {
@@ -167,11 +172,21 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

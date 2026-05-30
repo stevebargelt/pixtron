@@ -43,10 +43,7 @@ export interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function CardHeader({ children, className, ...props }: CardHeaderProps) {
   return (
-    <div
-      className={clsx('border-b border-[var(--color-border)] pb-4 mb-4', className)}
-      {...props}
-    >
+    <div className={clsx('border-b border-[var(--color-border)] pb-4 mb-4', className)} {...props}>
       {children}
     </div>
   )

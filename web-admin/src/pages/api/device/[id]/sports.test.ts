@@ -87,8 +87,18 @@ describe('GET /api/device/[id]/sports – active league filtering', () => {
   it('only returns sportConfigs for is_active=true leagues, excluding is_active=false', async () => {
     // device_leagues rows: one active (nhl), one inactive (nba)
     const leaguesData = [
-      { enabled: true, priority: 1, display_layout: 'stacked', league: { code: 'nhl', is_active: true } },
-      { enabled: true, priority: 2, display_layout: 'stacked', league: { code: 'nba', is_active: false } },
+      {
+        enabled: true,
+        priority: 1,
+        display_layout: 'stacked',
+        league: { code: 'nhl', is_active: true },
+      },
+      {
+        enabled: true,
+        priority: 2,
+        display_layout: 'stacked',
+        league: { code: 'nba', is_active: false },
+      },
     ]
 
     const orderMock = jest.fn().mockResolvedValue({ data: leaguesData, error: null })
@@ -136,8 +146,18 @@ describe('GET /api/device/[id]/sports – active league filtering', () => {
 
   it('returns display_layout per league, defaulting absent values to stacked', async () => {
     const leaguesData = [
-      { enabled: true, priority: 1, display_layout: 'side_by_side', league: { code: 'nhl', is_active: true } },
-      { enabled: true, priority: 2, display_layout: null, league: { code: 'wnba', is_active: true } },
+      {
+        enabled: true,
+        priority: 1,
+        display_layout: 'side_by_side',
+        league: { code: 'nhl', is_active: true },
+      },
+      {
+        enabled: true,
+        priority: 2,
+        display_layout: null,
+        league: { code: 'wnba', is_active: true },
+      },
     ]
 
     const orderMock = jest.fn().mockResolvedValue({ data: leaguesData, error: null })
@@ -219,7 +239,12 @@ describe('GET /api/device/[id]/sports – display_layout contract integrity', ()
 
   it('collapses big-logos from DB to stacked (out-of-range value guard)', async () => {
     buildGetMocks([
-      { enabled: true, priority: 1, display_layout: 'big-logos', league: { code: 'nhl', is_active: true } },
+      {
+        enabled: true,
+        priority: 1,
+        display_layout: 'big-logos',
+        league: { code: 'nhl', is_active: true },
+      },
     ])
 
     const handler = await loadHandler()
@@ -235,7 +260,12 @@ describe('GET /api/device/[id]/sports – display_layout contract integrity', ()
 
   it('collapses arbitrary invalid display_layout from DB to stacked', async () => {
     buildGetMocks([
-      { enabled: true, priority: 1, display_layout: 'wide', league: { code: 'nhl', is_active: true } },
+      {
+        enabled: true,
+        priority: 1,
+        display_layout: 'wide',
+        league: { code: 'nhl', is_active: true },
+      },
       { enabled: true, priority: 2, display_layout: '', league: { code: 'wnba', is_active: true } },
     ])
 
@@ -254,8 +284,18 @@ describe('GET /api/device/[id]/sports – display_layout contract integrity', ()
 
   it('per-league independence: NHL side_by_side and WNBA stacked returned independently', async () => {
     buildGetMocks([
-      { enabled: true, priority: 1, display_layout: 'side_by_side', league: { code: 'nhl', is_active: true } },
-      { enabled: true, priority: 2, display_layout: 'stacked', league: { code: 'wnba', is_active: true } },
+      {
+        enabled: true,
+        priority: 1,
+        display_layout: 'side_by_side',
+        league: { code: 'nhl', is_active: true },
+      },
+      {
+        enabled: true,
+        priority: 2,
+        display_layout: 'stacked',
+        league: { code: 'wnba', is_active: true },
+      },
     ])
 
     const handler = await loadHandler()
@@ -311,8 +351,20 @@ describe('PUT /api/device/[id]/sports – display_layout persistence', () => {
       method: 'PUT',
       body: {
         sportConfigs: [
-          { sport: 'nhl', enabled: true, priority: 1, display_layout: 'side_by_side', favorite_teams: [] },
-          { sport: 'wnba', enabled: true, priority: 2, display_layout: 'stacked', favorite_teams: [] },
+          {
+            sport: 'nhl',
+            enabled: true,
+            priority: 1,
+            display_layout: 'side_by_side',
+            favorite_teams: [],
+          },
+          {
+            sport: 'wnba',
+            enabled: true,
+            priority: 2,
+            display_layout: 'stacked',
+            favorite_teams: [],
+          },
         ],
       },
     })
@@ -335,8 +387,20 @@ describe('PUT /api/device/[id]/sports – display_layout persistence', () => {
       method: 'PUT',
       body: {
         sportConfigs: [
-          { sport: 'nhl', enabled: true, priority: 1, display_layout: 'big-logos', favorite_teams: [] },
-          { sport: 'wnba', enabled: true, priority: 2, display_layout: 'invalid', favorite_teams: [] },
+          {
+            sport: 'nhl',
+            enabled: true,
+            priority: 1,
+            display_layout: 'big-logos',
+            favorite_teams: [],
+          },
+          {
+            sport: 'wnba',
+            enabled: true,
+            priority: 2,
+            display_layout: 'invalid',
+            favorite_teams: [],
+          },
         ],
       },
     })
@@ -358,8 +422,20 @@ describe('PUT /api/device/[id]/sports – display_layout persistence', () => {
       method: 'PUT',
       body: {
         sportConfigs: [
-          { sport: 'nhl', enabled: true, priority: 1, display_layout: 'side_by_side', favorite_teams: [] },
-          { sport: 'wnba', enabled: true, priority: 2, display_layout: 'stacked', favorite_teams: [] },
+          {
+            sport: 'nhl',
+            enabled: true,
+            priority: 1,
+            display_layout: 'side_by_side',
+            favorite_teams: [],
+          },
+          {
+            sport: 'wnba',
+            enabled: true,
+            priority: 2,
+            display_layout: 'stacked',
+            favorite_teams: [],
+          },
         ],
       },
     })

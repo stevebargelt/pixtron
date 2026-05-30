@@ -30,8 +30,7 @@ const buttonVariants: Record<ButtonVariant, string> = {
   error: 'bg-error-600 hover:bg-error-700 focus:ring-error-500 text-white shadow-sm',
   ghost:
     'bg-transparent hover:bg-gray-100 focus:ring-primary-500 text-gray-700 dark:hover:bg-gray-800 dark:text-gray-200',
-  destructive:
-    'bg-danger hover:bg-danger-hover focus:ring-danger text-danger-fg shadow-sm',
+  destructive: 'bg-danger hover:bg-danger-hover focus:ring-danger text-danger-fg shadow-sm',
 }
 
 const buttonSizes: Record<ButtonSize, string> = {
