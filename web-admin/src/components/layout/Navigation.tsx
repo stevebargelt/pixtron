@@ -46,9 +46,7 @@ function SidebarContent({ email, onSignOut }: SidebarContentProps) {
       <nav className="flex-1 px-3 space-y-0.5" aria-label="Main navigation">
         {navItems.map(item => {
           const isActive =
-            item.href === '/'
-              ? router.pathname === '/'
-              : router.pathname.startsWith(item.href)
+            item.href === '/' ? router.pathname === '/' : router.pathname.startsWith(item.href)
           return (
             <Link
               key={item.name}
@@ -101,7 +99,10 @@ function SidebarContent({ email, onSignOut }: SidebarContentProps) {
               'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]'
             )}
           >
-            <ArrowRightOnRectangleIcon className="w-[18px] h-[18px] flex-shrink-0" aria-hidden="true" />
+            <ArrowRightOnRectangleIcon
+              className="w-[18px] h-[18px] flex-shrink-0"
+              aria-hidden="true"
+            />
             Sign out
           </button>
         </div>
@@ -148,7 +149,9 @@ export function Navigation({ mobileOpen = false, onMobileClose }: NavigationProp
   return (
     <>
       {/* Desktop sidebar — always visible on lg+ */}
-      <aside className={clsx('hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-40', SIDEBAR_WIDTH)}>
+      <aside
+        className={clsx('hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-40', SIDEBAR_WIDTH)}
+      >
         <SidebarContent email={email} onSignOut={handleSignOut} />
       </aside>
 
@@ -156,11 +159,7 @@ export function Navigation({ mobileOpen = false, onMobileClose }: NavigationProp
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/50"
-            onClick={onMobileClose}
-            aria-hidden="true"
-          />
+          <div className="fixed inset-0 bg-black/50" onClick={onMobileClose} aria-hidden="true" />
 
           {/* Drawer */}
           <div className={clsx('relative flex flex-col', SIDEBAR_WIDTH)}>

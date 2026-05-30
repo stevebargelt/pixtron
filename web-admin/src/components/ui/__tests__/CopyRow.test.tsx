@@ -29,9 +29,7 @@ describe('CopyRow', () => {
   it('copies value to clipboard when button clicked', async () => {
     render(<CopyRow label="DEVICE_ID" value="abc-123-xyz" />)
     fireEvent.click(screen.getByRole('button', { name: /copy device_id/i }))
-    await waitFor(() =>
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('abc-123-xyz')
-    )
+    await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledWith('abc-123-xyz'))
   })
 
   it('applies custom className', () => {
