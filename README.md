@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="brand/pixtron-wordmark-1344.png" alt="Pixtron" width="640">
+  <img src="brand/pixtron-wordmark-banner.png" alt="Pixtron" width="640">
 </p>
 
 <h1 align="center">Pixtron</h1>
