@@ -98,6 +98,21 @@ func statusLine(g sports.GameSnapshot) string {
 	return strings.TrimSpace(periodName(g.Period) + " " + g.DisplayClock)
 }
 
+// statusTwoLines splits the live status into a period line and a clock line for
+// the LiveBig layout (period top, clock below).
+func statusTwoLines(g sports.GameSnapshot) (string, string) {
+	if strings.EqualFold(strings.TrimSpace(g.StatusDetail), "halftime") {
+		return "Half", "time"
+	}
+	if g.Intermission {
+		if g.Period > 0 {
+			return fmt.Sprintf("Int %d", g.Period), strings.TrimSpace(g.DisplayClock)
+		}
+		return "Int", strings.TrimSpace(g.DisplayClock)
+	}
+	return periodName(g.Period), strings.TrimSpace(g.DisplayClock)
+}
+
 func periodName(period int) string {
 	switch period {
 	case 0:

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	xdraw "golang.org/x/image/draw"
+	"golang.org/x/image/font"
 
 	"github.com/stevebargelt/pixtron/go-scoreboard/internal/render"
 	"github.com/stevebargelt/pixtron/go-scoreboard/internal/sports"
@@ -35,31 +36,42 @@ func (lb LiveBig) Render(width, height int, _ time.Time) *image.RGBA {
 	abbrColor := color.RGBA{R: 220, G: 220, B: 220, A: 255}
 	scoreColor := color.RGBA{R: 255, G: 255, B: 255, A: 255}
 
-	const (
-		logoW = 16
-		logoH = 16
-		logoY = 1
-		abbrY = 24
-	)
-	awayLogoLeft := 1
-	homeLogoLeft := width - logoW - 1
+	// Layout (hand-designed, 64x32): 20x20 logos in the top corners, scores
+	// centered below each logo, team abbreviations stacked vertically flanking
+	// the center, and a two-line period/clock at top-center.
+	const logoW, logoH = 20, 20
 
-	// Away on the left, home on the right (away @ home).
-	pasteLogo(img, render.Logo(lb.AssetsDir, lb.Game.Away.ID, render.LogoBanner), awayLogoLeft, logoY, logoW, logoH)
-	pasteLogo(img, render.Logo(lb.AssetsDir, lb.Game.Home.ID, render.LogoBanner), homeLogoLeft, logoY, logoW, logoH)
+	// Logos: top corners.
+	pasteLogo(img, render.Logo(lb.AssetsDir, lb.Game.Away.ID, render.LogoBanner), 0, 0, logoW, logoH)
+	pasteLogo(img, render.Logo(lb.AssetsDir, lb.Game.Home.ID, render.LogoBanner), width-logoW, 0, logoW, logoH)
 
-	render.DrawText(img, lb.Game.Away.Abbr, smallFace, abbrColor, awayLogoLeft+logoW/2, abbrY, render.AlignCenter)
-	render.DrawText(img, lb.Game.Home.Abbr, smallFace, abbrColor, homeLogoLeft+logoW/2, abbrY, render.AlignCenter)
+	// Scores: centered under each logo (logo centers are logoW/2 from each edge),
+	// baseline at row 30 so the 10px-tall digits fill rows 21-30. Tracked to 1px
+	// between digits so a 3-digit score fits an 18px-wide box.
+	render.DrawTextTracked(img, fmt.Sprintf("%d", lb.Game.Away.Score), scoreFace, scoreColor, logoW/2, 31, render.AlignCenter, -1)
+	render.DrawTextTracked(img, fmt.Sprintf("%d", lb.Game.Home.Score), scoreFace, scoreColor, width-logoW/2, 31, render.AlignCenter, -1)
 
-	// Scores, larger, in the wide center gap between the logos.
-	mid := width / 2
-	render.DrawText(img, fmt.Sprintf("%d", lb.Game.Away.Score), scoreFace, scoreColor, mid-2, 14, render.AlignRight)
-	render.DrawText(img, fmt.Sprintf("%d", lb.Game.Home.Score), scoreFace, scoreColor, mid+2, 14, render.AlignLeft)
+	// Abbreviations: vertical stacks flanking the center channel. Letters are
+	// 5px tall; baselines at 19/25/31 fill rows 15-31.
+	drawVertical(img, lb.Game.Away.Abbr, smallFace, abbrColor, 23, 19, 6)
+	drawVertical(img, lb.Game.Home.Abbr, smallFace, abbrColor, width-24, 19, 6)
 
-	// Period + clock at the bottom in green, matching the stacked scene.
-	render.DrawText(img, statusLine(lb.Game), smallFace, statusColor, width/2, height-1, render.AlignCenter)
+	// Period + clock: two centered lines at top-center, in green.
+	line1, line2 := statusTwoLines(lb.Game)
+	render.DrawText(img, line1, smallFace, statusColor, width/2, 5, render.AlignCenter)
+	render.DrawText(img, line2, smallFace, statusColor, width/2, 12, render.AlignCenter)
 
 	return img
+}
+
+// drawVertical renders each rune of s centered at cx, stacked top-to-bottom with
+// the first baseline at y0 and step pixels between successive baselines.
+func drawVertical(dst *image.RGBA, s string, face font.Face, col color.Color, cx, y0, step int) {
+	y := y0
+	for _, r := range s {
+		render.DrawText(dst, string(r), face, col, cx, y, render.AlignCenter)
+		y += step
+	}
 }
 
 func pasteLogo(dst *image.RGBA, src image.Image, x, y, w, h int) {
