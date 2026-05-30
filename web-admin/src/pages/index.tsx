@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabase } from '../lib/supabaseClient'
 import { Layout } from '../components/layout'
 import { Card, CardHeader, CardTitle, Button, Input, DeviceCard } from '../components/ui'
@@ -62,45 +63,55 @@ export default function Home() {
   if (!session) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">WNBA LED Web Admin</CardTitle>
-            <p className="text-center text-gray-600 dark:text-gray-400 mt-2">
-              Sign in to manage your LED scoreboards
-            </p>
-          </CardHeader>
+        <div className="w-full max-w-md flex flex-col items-center gap-6">
+          <Image
+            src="/brand/pixtron-wordmark-672.png"
+            alt="Pixtron"
+            width={336}
+            height={96}
+            priority
+            className="w-56 h-auto"
+          />
+          <Card className="w-full">
+            <CardHeader>
+              <CardTitle className="text-center">WNBA LED Web Admin</CardTitle>
+              <p className="text-center text-gray-600 dark:text-gray-400 mt-2">
+                Sign in to manage your LED scoreboards
+              </p>
+            </CardHeader>
 
-          <div className="space-y-4">
-            <Input
-              label="Email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              leftIcon={<UserIcon className="h-4 w-4" />}
-            />
-            <Input
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
+            <div className="space-y-4">
+              <Input
+                label="Email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                leftIcon={<UserIcon className="h-4 w-4" />}
+              />
+              <Input
+                label="Password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+              />
 
-            <div className="flex space-x-2">
-              <Button onClick={signIn} loading={loading} className="flex-1">
-                Sign In
-              </Button>
-              <Button onClick={signUp} variant="secondary" loading={loading} className="flex-1">
-                Sign Up
-              </Button>
+              <div className="flex space-x-2">
+                <Button onClick={signIn} loading={loading} className="flex-1">
+                  Sign In
+                </Button>
+                <Button onClick={signUp} variant="secondary" loading={loading} className="flex-1">
+                  Sign Up
+                </Button>
+              </div>
+
+              {message && (
+                <p className="text-sm text-center text-red-600 dark:text-red-400">{message}</p>
+              )}
             </div>
-
-            {message && (
-              <p className="text-sm text-center text-red-600 dark:text-red-400">{message}</p>
-            )}
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
     )
   }

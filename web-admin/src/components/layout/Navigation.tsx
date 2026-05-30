@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/router'
 import {
   HomeIcon,
   ArrowRightOnRectangleIcon,
-  TvIcon,
   Bars3Icon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
@@ -34,9 +34,18 @@ function SidebarContent({ email, onSignOut }: SidebarContentProps) {
     <div className="flex flex-col h-full bg-[var(--color-surface)] border-r border-[var(--color-border)]">
       {/* Brand */}
       <div className="flex items-center gap-2.5 px-5 pt-5 pb-6">
-        <div className="flex-shrink-0 w-[34px] h-[34px] rounded-md bg-accent flex items-center justify-center">
-          <TvIcon className="w-5 h-5 text-accent-fg" aria-hidden="true" />
-        </div>
+        <Link
+          href="/"
+          className="flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-md"
+        >
+          <Image
+            src="/brand/pixtron-lettermark-128.png"
+            alt="Pixtron"
+            width={34}
+            height={34}
+            className="rounded-md"
+          />
+        </Link>
         <span className="text-base font-bold text-[var(--color-text-primary)] leading-none">
           LED Admin
         </span>
