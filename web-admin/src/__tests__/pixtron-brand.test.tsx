@@ -26,9 +26,7 @@ describe('Pixtron brand — login page wordmark', () => {
     const img = await screen.findByAltText('Pixtron')
     const signInText = await screen.findByText(/sign in to manage/i)
     // img must precede the auth card text in document order
-    expect(
-      img.compareDocumentPosition(signInText) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy()
+    expect(img.compareDocumentPosition(signInText) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })
 

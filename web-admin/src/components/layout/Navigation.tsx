@@ -34,7 +34,10 @@ function SidebarContent({ email, onSignOut }: SidebarContentProps) {
     <div className="flex flex-col h-full bg-[var(--color-surface)] border-r border-[var(--color-border)]">
       {/* Brand */}
       <div className="flex items-center gap-2.5 px-5 pt-5 pb-6">
-        <Link href="/" className="flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-md">
+        <Link
+          href="/"
+          className="flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-md"
+        >
           <Image
             src="/brand/pixtron-lettermark-128.png"
             alt="Pixtron"
