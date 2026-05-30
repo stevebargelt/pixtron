@@ -4,12 +4,6 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-// Parse admin emails from environment
-const adminEmails = (process.env.ADMIN_EMAILS || '')
-  .split(',')
-  .map(s => s.trim())
-  .filter(Boolean)
-
 export interface AuthenticatedUser {
   id: string
   email?: string
@@ -22,17 +16,7 @@ export interface AuthResult {
   error?: string
 }
 
-/**
- * Verify authentication and optionally check admin status
- * @param req - NextJS API request
- * @param requireAdmin - Whether to require admin access (checks ADMIN_EMAILS env)
- * @returns Authentication result with user info or error
- */
-export async function verifyAuth(
-  req: NextApiRequest,
-  requireAdmin: boolean = false
-): Promise<AuthResult> {
-  // Check for service key
+export async function verifyAuth(req: NextApiRequest): Promise<AuthResult> {
   if (!supabaseUrl || !serviceKey) {
     return {
       authenticated: false,
@@ -40,7 +24,6 @@ export async function verifyAuth(
     }
   }
 
-  // Extract token from Authorization header
   const authHeader = req.headers.authorization
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return {
@@ -58,12 +41,10 @@ export async function verifyAuth(
   }
 
   try {
-    // Create admin client with service role key
     const admin = createClient(supabaseUrl, serviceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     })
 
-    // Verify the user token
     const {
       data: { user },
       error: userErr,
@@ -73,22 +54,6 @@ export async function verifyAuth(
       return {
         authenticated: false,
         error: 'Invalid auth token',
-      }
-    }
-
-    // Check admin requirement if specified
-    if (requireAdmin) {
-      // In development or when no admin emails configured, allow all authenticated users
-      if (process.env.NODE_ENV === 'development' || adminEmails.length === 0) {
-        console.log('Admin check bypassed: development mode or no admin emails configured')
-      } else {
-        // Check if user is in admin list
-        if (!user.email || !adminEmails.includes(user.email)) {
-          return {
-            authenticated: false,
-            error: 'Admin access required',
-          }
-        }
       }
     }
 
@@ -109,36 +74,24 @@ export async function verifyAuth(
   }
 }
 
-/**
- * Middleware helper to protect API routes
- * @param handler - The API route handler
- * @param requireAdmin - Whether to require admin access
- * @returns Wrapped handler with authentication
- */
 export function withAuth(
   handler: (
     req: NextApiRequest,
     res: NextApiResponse,
     user: AuthenticatedUser
-  ) => Promise<void> | void,
-  requireAdmin: boolean = false
+  ) => Promise<void> | void
 ) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
-    const authResult = await verifyAuth(req, requireAdmin)
+    const authResult = await verifyAuth(req)
 
     if (!authResult.authenticated) {
-      const statusCode = authResult.error === 'Admin access required' ? 403 : 401
-      return res.status(statusCode).json({ error: authResult.error })
+      return res.status(401).json({ error: authResult.error })
     }
 
     return handler(req, res, authResult.user!)
   }
 }
 
-/**
- * Get the Supabase admin client for server-side operations
- * @returns Supabase client with service role key
- */
 export function getAdminClient() {
   if (!supabaseUrl || !serviceKey) {
     throw new Error('Server misconfigured: missing Supabase credentials')

@@ -8,19 +8,9 @@ const Providers = ({ children }: { children: React.ReactNode }) => (
   <ThemeProvider>{children}</ThemeProvider>
 )
 
-// Mock fetch for API calls (e.g. /api/auth/is-admin)
-global.fetch = jest.fn().mockResolvedValue({
-  ok: true,
-  json: async () => ({ isAdmin: false }),
-} as Response)
-
 describe('Page Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    ;(global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => ({ isAdmin: false }),
-    })
   })
 
   describe('Home Page', () => {
@@ -72,18 +62,6 @@ describe('Page Integration Tests', () => {
 
       await waitFor(() => {
         expect(screen.getByText(/add device/i)).toBeInTheDocument()
-      })
-    })
-
-    it('displays application layout with branding', async () => {
-      render(
-        <Providers>
-          <NewDevice />
-        </Providers>
-      )
-
-      await waitFor(() => {
-        expect(screen.getAllByText('LED Admin').length).toBeGreaterThan(0)
       })
     })
   })
