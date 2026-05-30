@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -42,6 +44,7 @@ func main() {
 	assetsDir := flag.String("assets-dir", "../assets", "path to assets directory (for team logos)")
 	demoLeagues := flag.String("demo-leagues", "", "comma-separated leagues to use without Supabase (e.g. \"wnba,nhl\")")
 	demoLiveBig := flag.Bool("demo-live-big", false, "render a synthetic live side_by_side game (dev: preview LiveBig with no live game; no network)")
+	demoScores := flag.String("demo-scores", "88,92", "away,home scores for --demo-live-big (e.g. \"101,109\")")
 	flag.Parse()
 
 	if err := config.LoadEnvFile(*envFile); err != nil {
@@ -107,7 +110,8 @@ func main() {
 
 	state := newAppState(*assetsDir, *demoLeagues)
 	if *demoLiveBig {
-		state.enableDemoLiveBig()
+		away, home := parseDemoScores(*demoScores)
+		state.enableDemoLiveBig(away, home)
 	}
 	state.reloadConfig()
 	d.SetBrightness(state.currentBrightness())
@@ -179,12 +183,12 @@ type appState struct {
 // enableDemoLiveBig pins a fixed live side_by_side game so the LiveBig scene can
 // be previewed on hardware without a real live game. It disables config/game
 // fetching so the synthetic game is never overwritten.
-func (s *appState) enableDemoLiveBig() {
+func (s *appState) enableDemoLiveBig(awayScore, homeScore int) {
 	g := sports.GameSnapshot{
 		League:       "wnba",
 		State:        sports.StateLive,
-		Away:         sports.Team{ID: "16", Abbr: "WSH", Score: 88},
-		Home:         sports.Team{ID: "131935", Abbr: "TOR", Score: 92},
+		Away:         sports.Team{ID: "16", Abbr: "WSH", Score: awayScore},
+		Home:         sports.Team{ID: "131935", Abbr: "TOR", Score: homeScore},
 		Period:       3,
 		DisplayClock: "5:43",
 	}
@@ -195,6 +199,21 @@ func (s *appState) enableDemoLiveBig() {
 	s.chosen = &g
 	s.games = []sports.GameSnapshot{g}
 	s.mu.Unlock()
+}
+
+// parseDemoScores parses an "away,home" string into two scores, falling back to
+// 88,92 on any malformed input.
+func parseDemoScores(s string) (int, int) {
+	parts := splitCSV(s)
+	if len(parts) != 2 {
+		return 88, 92
+	}
+	a, err1 := strconv.Atoi(strings.TrimSpace(parts[0]))
+	h, err2 := strconv.Atoi(strings.TrimSpace(parts[1]))
+	if err1 != nil || err2 != nil {
+		return 88, 92
+	}
+	return a, h
 }
 
 // Live-view layout values stored in device_config.live_display_layout and
