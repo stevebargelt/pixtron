@@ -26,6 +26,7 @@ interface SportConfig {
   enabled: boolean
   priority: number
   favorite_teams: string[]
+  display_layout: 'stacked' | 'side_by_side'
 }
 
 interface TeamEntry {
@@ -345,6 +346,7 @@ export function DeviceTeamsTab({ deviceId }: { deviceId: string }): ReactElement
           sport: String(c.sport),
           enabled: Boolean(c.enabled),
           priority: Number(c.priority),
+          display_layout: c.display_layout === 'side_by_side' ? 'side_by_side' : 'stacked',
           favorite_teams: Array.isArray(c.favorite_teams) ? c.favorite_teams.map(String) : [],
         }))
         setConfigs(loaded)
@@ -355,6 +357,10 @@ export function DeviceTeamsTab({ deviceId }: { deviceId: string }): ReactElement
 
   function toggleEnabled(sport: string, enabled: boolean) {
     setConfigs(prev => prev.map(c => (c.sport === sport ? { ...c, enabled } : c)))
+  }
+
+  function setLayout(sport: string, layout: 'stacked' | 'side_by_side') {
+    setConfigs(prev => prev.map(c => (c.sport === sport ? { ...c, display_layout: layout } : c)))
   }
 
   function removeTeam(sport: string, teamId: string) {
@@ -410,6 +416,7 @@ export function DeviceTeamsTab({ deviceId }: { deviceId: string }): ReactElement
             sport: c.sport,
             enabled: c.enabled,
             priority: c.priority,
+            display_layout: c.display_layout,
             favorite_teams: c.favorite_teams,
           })),
         }),
@@ -469,6 +476,25 @@ export function DeviceTeamsTab({ deviceId }: { deviceId: string }): ReactElement
             <div>
               {config.enabled ? (
                 <>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-medium text-[var(--color-text-muted)]">
+                      Layout
+                    </span>
+                    {(['stacked', 'side_by_side'] as const).map(layout => (
+                      <button
+                        key={layout}
+                        type="button"
+                        onClick={() => setLayout(config.sport, layout)}
+                        className={`px-3 py-1 text-xs rounded-token-sm border transition-colors ${
+                          config.display_layout === layout
+                            ? `border-[var(--color-accent)] ${styles.badge}`
+                            : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-accent)]'
+                        }`}
+                      >
+                        {layout === 'stacked' ? 'Stacked' : 'Side-by-side'}
+                      </button>
+                    ))}
+                  </div>
                   {config.favorite_teams.length > 0 && (
                     <LeaguePills
                       sport={config.sport}

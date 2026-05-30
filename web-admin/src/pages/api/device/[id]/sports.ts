@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Load enabled leagues for this device with league details
       const { data: leagues, error: leaguesError } = await userScoped
         .from('device_leagues')
-        .select('enabled, priority, league:leagues(code, is_active)')
+        .select('enabled, priority, display_layout, league:leagues(code, is_active)')
         .eq('device_id', deviceId)
         .order('priority', { ascending: true })
 
@@ -80,6 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           sport: league.league.code,
           enabled: league.enabled,
           priority: league.priority,
+          display_layout: league.display_layout === 'side_by_side' ? 'side_by_side' : 'stacked',
           favorite_teams: favoritesByLeague[league.league.code] || [],
         }))
 
@@ -148,6 +149,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
 
       if (rpcError) return res.status(500).json({ error: rpcError.message })
+
+      // Persist display_layout per league (column not handled by save_device_teams RPC)
+      for (const config of sportConfigs) {
+        const leagueId = leagueMap.get(String(config.sport))
+        if (!leagueId) continue
+        const layout = config.display_layout === 'side_by_side' ? 'side_by_side' : 'stacked'
+        const { error: layoutError } = await userScoped
+          .from('device_leagues')
+          .update({ display_layout: layout })
+          .eq('device_id', deviceId)
+          .eq('league_id', leagueId)
+        if (layoutError) return res.status(500).json({ error: layoutError.message })
+      }
 
       return res.status(200).json({ success: true })
     } catch (e: any) {
