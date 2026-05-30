@@ -26,7 +26,7 @@ func (lb LiveBig) Render(width, height int, _ time.Time) *image.RGBA {
 	if err != nil {
 		return img
 	}
-	scoreFace, err := render.Face(render.FontScoreLarge, 16)
+	scoreFace, err := render.Face(render.Font04B24, 16)
 	if err != nil {
 		return img
 	}
