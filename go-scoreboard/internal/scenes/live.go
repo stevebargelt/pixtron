@@ -48,9 +48,9 @@ func (l Live) Render(width, height int, _ time.Time) *image.RGBA {
 
 	drawRow := func(team sports.Team, rowY int) {
 		if logo := render.Logo(l.AssetsDir, team.ID, render.LogoMini); logo != nil {
-			draw.Draw(img,
-				image.Rect(logoX, rowY, logoX+logoSize, rowY+logoSize),
-				logo, image.Point{}, draw.Over)
+			// Scale (don't crop) the variant into the square slot so non-10x10
+			// source art renders whole and aspect-correct.
+			pasteLogo(img, logo, logoX, rowY, logoSize, logoSize)
 		} else {
 			placeholder := color.RGBA{R: 80, G: 80, B: 80, A: 255}
 			for y := rowY; y < rowY+logoSize; y++ {
