@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import {
   HomeIcon,
-  TrophyIcon,
   ArrowRightOnRectangleIcon,
   TvIcon,
   Bars3Icon,
@@ -22,19 +21,14 @@ interface NavItem {
 
 const baseNav: NavItem[] = [{ name: 'Dashboard', href: '/', icon: HomeIcon }]
 
-const adminNav: NavItem[] = [
-  { name: 'Admin', href: '/admin/sports-leagues', icon: TrophyIcon },
-]
-
 interface SidebarContentProps {
-  isAdmin: boolean
   email: string | null
   onSignOut: () => void
 }
 
-function SidebarContent({ isAdmin, email, onSignOut }: SidebarContentProps) {
+function SidebarContent({ email, onSignOut }: SidebarContentProps) {
   const router = useRouter()
-  const navItems = isAdmin ? [...baseNav, ...adminNav] : baseNav
+  const navItems = baseNav
 
   return (
     <div className="flex flex-col h-full bg-[var(--color-surface)] border-r border-[var(--color-border)]">
@@ -123,7 +117,6 @@ interface NavigationProps {
 
 export function Navigation({ mobileOpen = false, onMobileClose }: NavigationProps) {
   const router = useRouter()
-  const [isAdmin, setIsAdmin] = useState(false)
   const [email, setEmail] = useState<string | null>(null)
 
   useEffect(() => {
@@ -138,18 +131,6 @@ export function Navigation({ mobileOpen = false, onMobileClose }: NavigationProp
 
       if (session?.user?.email) {
         setEmail(session.user.email)
-      }
-
-      if (session?.access_token) {
-        try {
-          const res = await fetch('/api/auth/is-admin', {
-            headers: { Authorization: `Bearer ${session.access_token}` },
-          })
-          const data = await res.json()
-          if (mounted) setIsAdmin(data.isAdmin || false)
-        } catch {
-          // silently fail — admin item just won't render
-        }
       }
     }
 
@@ -168,7 +149,7 @@ export function Navigation({ mobileOpen = false, onMobileClose }: NavigationProp
     <>
       {/* Desktop sidebar — always visible on lg+ */}
       <aside className={clsx('hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-40', SIDEBAR_WIDTH)}>
-        <SidebarContent isAdmin={isAdmin} email={email} onSignOut={handleSignOut} />
+        <SidebarContent email={email} onSignOut={handleSignOut} />
       </aside>
 
       {/* Mobile overlay */}
@@ -193,7 +174,7 @@ export function Navigation({ mobileOpen = false, onMobileClose }: NavigationProp
               </button>
             </div>
             <div className="h-full overflow-y-auto">
-              <SidebarContent isAdmin={isAdmin} email={email} onSignOut={handleSignOut} />
+              <SidebarContent email={email} onSignOut={handleSignOut} />
             </div>
           </div>
         </div>
