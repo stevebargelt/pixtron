@@ -199,11 +199,51 @@ func decodeFile(path string) (image.Image, error) {
 	return png.Decode(f)
 }
 
-// writeVariant fits src into a size x size transparent canvas preserving aspect
-// ratio (letterboxing wide logos), so the square slots the renderer uses don't
-// stretch non-square source art.
+// contentBounds returns the bounding box of the logo's actual mark, trimming
+// surrounding margin — transparent pixels (WNBA's alpha PNGs) and near-white
+// pixels (NHL's white-background PNGs). Only fully-background edges are trimmed;
+// interior white is kept because the surrounding colored pixels set the box.
+func contentBounds(img image.Image) image.Rectangle {
+	b := img.Bounds()
+	bg := func(x, y int) bool {
+		r, g, bl, a := img.At(x, y).RGBA()
+		if a < 0x4000 { // mostly transparent
+			return true
+		}
+		return r > 0xE000 && g > 0xE000 && bl > 0xE000 // near-white
+	}
+	minX, minY := b.Max.X, b.Max.Y
+	maxX, maxY := b.Min.X-1, b.Min.Y-1
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			if bg(x, y) {
+				continue
+			}
+			if x < minX {
+				minX = x
+			}
+			if x > maxX {
+				maxX = x
+			}
+			if y < minY {
+				minY = y
+			}
+			if y > maxY {
+				maxY = y
+			}
+		}
+	}
+	if maxX < minX || maxY < minY {
+		return b // entirely background; fall back to the full image
+	}
+	return image.Rect(minX, minY, maxX+1, maxY+1)
+}
+
+// writeVariant trims the source margin then fits the mark into a size x size
+// transparent canvas preserving aspect ratio (letterboxing wide logos), so the
+// square slots the renderer uses are filled rather than padded.
 func writeVariant(src image.Image, path string, size int) error {
-	sb := src.Bounds()
+	sb := contentBounds(src)
 	sw, sh := sb.Dx(), sb.Dy()
 	if sw <= 0 || sh <= 0 {
 		return fmt.Errorf("empty source image")
