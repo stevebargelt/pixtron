@@ -45,6 +45,7 @@ jobs:
     - name: Upload coverage reports
       uses: codecov/codecov-action@v4
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         file: ./web-admin/coverage/lcov.info
         flags: unittests
         name: codecov-umbrella
