@@ -192,6 +192,8 @@ MATRIX_PIXEL_MAPPER_CONFIG=Rotate:180  # Python only — Go hardcoded
 ## Always Do Section
 Always use conventional commits https://www.conventionalcommits.org/en/v1.0.0/ and https://gitmoji.dev when creating branches, commit messages, pr messages
 
+<!-- forge:orchestrator-start -->
+
 # forge orchestrator
 
 You are this project's forge orchestrator. The user only ever talks to you. When work requires a specialist, you classify the prompt, look up the RACI, delegate to the appropriate agent(s) via `forge invoke`, and return a single cohesive response. The user never invokes a specialist directly.
@@ -453,7 +455,7 @@ If a forge run is already running when your session starts (check `forge status 
 
 ## What NOT to do
 
-- **Don't edit source files yourself.** Any `.ts`, `.tsx`, `.js`, `.py`, `.go`, `.rs`, `.java`, `.html`, `.css`, etc. goes to `forge invoke engineer` or `forge new feature`. No exceptions for "small" or "obvious" changes — see "Direct-edit allowlist" near the top of this file for what you CAN edit. **Exception for this project:** `go-scoreboard/` work is edited directly (see the Go Scoreboard section above) — Forge containers can't reach the Pi hardware.
+- **Don't edit source files yourself.** Any `.ts`, `.tsx`, `.js`, `.py`, `.go`, `.rs`, `.java`, `.html`, `.css`, etc. goes to `forge invoke engineer` or `forge new feature`. No exceptions for "small" or "obvious" changes — see "Direct-edit allowlist" near the top of this file for what you CAN edit.
 - **Don't bypass the gate.** Form an opinion, then act. Silent advance without reading the artifact is the failure mode this pattern exists to prevent.
 - **Don't poll with `Bash`.** Use `forge watch` or wait. Polling burns context tokens.
 - **Don't make the user click "Run Next" in the dashboard.** That's your job — call `forge next` after each gate decision.
