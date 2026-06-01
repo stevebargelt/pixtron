@@ -5,8 +5,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'DELETE') {
-    res.setHeader('Allow', ['DELETE'])
+  if (req.method !== 'DELETE' && req.method !== 'PATCH') {
+    res.setHeader('Allow', ['DELETE', 'PATCH'])
     return res.status(405).json({ error: `Method ${req.method} not allowed` })
   }
 
@@ -44,6 +44,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   if (!deviceRow) {
     return res.status(403).json({ error: 'Forbidden' })
+  }
+
+  if (req.method === 'PATCH') {
+    const { name } = req.body || {}
+    const trimmedName = typeof name === 'string' ? name.trim() : ''
+    if (!trimmedName) {
+      return res.status(400).json({ error: 'name must be a non-empty string' })
+    }
+
+    const { error: updateError } = await userScoped
+      .from('devices')
+      .update({ name: trimmedName })
+      .eq('id', deviceId)
+
+    if (updateError) {
+      return res.status(500).json({ error: updateError.message })
+    }
+
+    return res.status(200).json({ name: trimmedName })
   }
 
   try {

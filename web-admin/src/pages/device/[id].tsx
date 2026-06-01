@@ -50,6 +50,11 @@ export default function DevicePage() {
   const [settingsLoading, setSettingsLoading] = useState(false)
   const [message, setMessage] = useState('')
 
+  const [nameInput, setNameInput] = useState('')
+  const [nameLoading, setNameLoading] = useState(false)
+  const [nameMessage, setNameMessage] = useState('')
+  const [nameIsError, setNameIsError] = useState(false)
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteNameInput, setDeleteNameInput] = useState('')
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -66,7 +71,10 @@ export default function DevicePage() {
         .select('id,name,last_seen_ts')
         .eq('id', id)
         .maybeSingle()
-      if (dev) setDevice(dev)
+      if (dev) {
+        setDevice(dev)
+        setNameInput(dev.name ?? '')
+      }
 
       const { data: sess } = await supabase.auth.getSession()
       const jwt = sess.session?.access_token
@@ -100,6 +108,45 @@ export default function DevicePage() {
     const interval = setInterval(loadDevice, 30000)
     return () => clearInterval(interval)
   }, [id])
+
+  async function saveName() {
+    if (!id) return
+    const trimmed = nameInput.trim()
+    if (!trimmed) return
+    setNameLoading(true)
+    setNameMessage('')
+    setNameIsError(false)
+    try {
+      const { data: sess } = await supabase.auth.getSession()
+      const jwt = sess.session?.access_token
+      if (!jwt) {
+        setNameIsError(true)
+        setNameMessage('Not signed in')
+        return
+      }
+      const resp = await fetch(`/api/device/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt}` },
+        body: JSON.stringify({ name: trimmed }),
+      })
+      if (resp.ok) {
+        const body = await resp.json()
+        setDevice(d => (d ? { ...d, name: body.name } : d))
+        setNameInput(body.name)
+        setNameMessage('Name updated.')
+      } else {
+        const ct = resp.headers.get('content-type') ?? ''
+        const body = ct.includes('application/json') ? await resp.json() : null
+        setNameIsError(true)
+        setNameMessage(`Save failed: ${body?.error || resp.status}`)
+      }
+    } catch (e: any) {
+      setNameIsError(true)
+      setNameMessage(`Error: ${e.message}`)
+    } finally {
+      setNameLoading(false)
+    }
+  }
 
   async function saveSettings() {
     if (!id) return
@@ -398,6 +445,56 @@ export default function DevicePage() {
                 </Button>
               </div>
               {message && <p className="text-sm text-[var(--color-text-secondary)]">{message}</p>}
+
+              {/* Device Name */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Device Name</CardTitle>
+                </CardHeader>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label
+                      htmlFor="device-name"
+                      className="block text-sm font-medium text-[var(--color-text-secondary)]"
+                    >
+                      Name
+                    </label>
+                    <input
+                      id="device-name"
+                      type="text"
+                      value={nameInput}
+                      onChange={e => {
+                        setNameInput(e.target.value)
+                        setNameMessage('')
+                      }}
+                      placeholder="My Scoreboard"
+                      className="block w-full h-[42px] rounded-token-sm border border-[var(--color-border)] bg-[var(--color-surface-3)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      size="sm"
+                      disabled={
+                        !nameInput.trim() ||
+                        nameInput.trim() === (device?.name ?? '') ||
+                        nameLoading
+                      }
+                      loading={nameLoading}
+                      onClick={saveName}
+                    >
+                      Save Name
+                    </Button>
+                    {nameMessage && (
+                      <p
+                        role={nameIsError ? 'alert' : 'status'}
+                        className="text-sm text-[var(--color-text-secondary)]"
+                      >
+                        {nameMessage}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </Card>
 
               {/* Danger Zone */}
               <div
