@@ -18,37 +18,36 @@ The `fetch_nhl_assets.py` script requires `cairosvg` which needs the `libcairo2-
 ### BL-005: WNBA teams parser reads venue but ESPN doesn't include it — CLOSED 2026-05-27
 
 ## Notes for next session
-**Session ended 2026-05-29 — PROJECT RENAMED to Pixtron + #14 shipped.**
+**Last session ended 2026-05-30 — Pixtron branding + LiveBig score/layout redesign.**
 
-**WORK FROM ~/code/pixtron NOW.** This repo is the canonical trunk: github.com/stevebargelt/pixtron (PUBLIC, fresh history). Old wnba-led-scoreboard repo is ARCHIVED (read-only backup); old local dir ~/code/wnba-led-scoreboard is a backup, safe to delete. Pi re-homed to ~/pixtron on main.
+**Where we left off:** Just merged PR #15 — LiveBig rebuilt to Steve's hand-designed per-corner layout (20×20 logos top corners, scores below each logo, vertical WSH/TOR abbrevs flanking center, two-line clock top-center) with crisp `04B_24@16` scores. Verified on the panel across 1/2/3-digit scores via the new `--demo-live-big` flag. Earlier in the session: shipped the whole Pixtron brand (logo assets + README banner + web-admin favicon/login/nav). Steve approved and we merged; session ended cleanly.
 
-**Shipped this session:**
-- #14 favorite reorder DONE end-to-end: migration 006 persists priority=array index (APPLIED to Supabase via CLI); Go SelectGame is rank-aware (rank breaks ties within state tier — live>pregame>final) with unit tests; dnd-kit drag-to-reorder UI with ordinals+grip+keyboard a11y; reorder E2E. All built + host-verified.
-- delete-device feature: DELETE /api/device/[id] (ownership+RLS, 204) + Settings "Danger Zone" type-to-confirm (exact name, trim, case-sensitive) → redirect to dashboard.
-- E2E harness (5 specs, all green on host): auth-smoke, add-device, teams-save, delete-device, reorder-favorites. Programmatic QA login in globalSetup (no forge auth-profile); seededDevice fixture; e2e-* orphan sweep. Run: cd web-admin && npx playwright test (webServer auto-starts; .auth/qa.json regenerated each run).
-- #18 fixed: pre-commit now uses lint-staged (staged-only) — no more repo-wide churn. Also fixed jest picking up e2e specs.
-- FINAL scene label moved to bottom-center (was overlapping away-team row).
-- Pixtron migration: Go module github.com/stevebargelt/pixtron/go-scoreboard; packages pixtron / pixtron-web-admin; purged 836 tracked watchman cookies + machine-local .claude/commands, gitignored.
+**Picked up next:**
+1. **Verify new LiveBig on a REAL live game.** We only confirmed via `--demo-live-big --demo-scores`; the live path (real ESPN data, intermission/halftime two-line status) hasn't been eyeballed on hardware. On the Pi: `cd ~/pixtron && git checkout main && git pull && cd go-scoreboard && go build -tags matrix -o scoreboard-matrix ./cmd/scoreboard && sudo ./scoreboard-matrix` (Steve runs sudo).
+2. **web-admin quick-hits, all route through Forge:** #25 (button "Save Teams"→"Save", one-liner), #26 (unsaved-changes toast shifts page layout — reposition), #24 (rename a device — needs PATCH /api/device/[id] + Settings UI).
+3. **#27 Upgrade Next.js** (14.2.35 → 15/16) to clear high CVEs, THEN tighten audit gates back to `high`.
+4. Older still-open: #21 (catalog RLS lockdown), #20 (empty-state E2E), #8 (live snapshot from device), #5 (Pi deploy automation via Tailscale), #15 (dev/QA auth bypass — recheck if still meaningful post admin-removal), #11/#12 (forge meta).
 
-**Picked up next (open tickets):**
-1. #15 dev/QA auth bypass — LIKELY CLOSEABLE: programmatic-login E2E harness built + admin dev-bypass live ("Admin check bypassed: development mode"). Confirm + close.
-2. #16 data-driven leagues / generic ESPN fetcher (big: Go aggregator.go has a STATIC fetcher registry wnba/nhl; leagues.api_config unused).
-3. #8 live snapshot from device. #10 admin role + gate catalog. #20 empty-state E2E via a dedicated no-device QA user.
-4. #5 automate Pi deploy (Tailscale + GH Actions) — would replace the manual SSH loop. #11/#12 forge meta. #1 route Go through Forge (blocked).
+**External state to remember:**
+- Pi: SSH alias `led-scoreboard-3`, IP `192.168.68.72` (DHCP, mDNS flaky — re-check on SSH fail). go-scoreboard dev loop is on the Pi (Forge can't reach GPIO). Steve runs `sudo` himself.
+- 4 GitHub repo SECRETS wired & working: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, CLAUDE_CODE_OAUTH_TOKEN, CODECOV_TOKEN.
+- Migrations through 008 applied to remote Supabase via `supabase db push`.
+- Brand assets live in repo-root `brand/` (source SVGs + PNG/ICO exports) — NOT `assets/`, which root `.gitignore` swallows. web-admin uses `public/brand/` + `app`-equivalent favicon tags in `_document.tsx` (Pages Router, not App Router).
+- WNBA logos exist locally on the Mac at `assets/logos/` (500px sources) + `assets/logos/variants/` (10px mini, 20px banner). TOR (Toronto Tempo, id 131935) banner is on the Pi but NOT local — renders blank in Mac sim only.
+- Stray file: `designs/compare.png` is untracked in the working tree (leftover artifact) — delete or ignore.
 
-**Critical state:**
-- Migrations now via Supabase CLI: `supabase db push` (linked, history reconciled through 006, dry-run first). NO SQL-editor step.
-- Pi: `cd ~/pixtron/go-scoreboard && sudo ./scoreboard-matrix` (needs sudo password — Steve runs it). Device currently OFFLINE (binary not running); rebuilt binary has #14. Logos/assets preserved (gitignored, Pi-only).
-- QA E2E user qa@bargelt.com (confirmed); creds in web-admin/.env as E2E_SUPABASE_EMAIL/PASSWORD (gitignored). DEVICE_ID steve-1 = 6e57af4b-6980-4e61-8ffe-417656114c96. Supabase project ref hvkyzkzcwswfyscsfqsw (unchanged).
-- web-admin dev: cd web-admin && npm run dev (localhost:3000). node_modules restored via npm ci in the new dir.
-- Domains pixtron.io / .dev still available if Steve wants one.
+**Decisions worth not relitigating:**
+- **LiveBig score = `04B_24@16`.** The blur saga's real answer. Pixel fonts (04B_03/04B_24/score_large) are crisp ONLY at size 8/16 (off-grid = AA blur). `score_large@16` is crisp in the framebuffer but its 1px counters BLOOM SHUT on the panel → blobs. `04B_24@16` has open counters that survive bloom (lit cap height = 10px). Hardware path (`matrix.go`) is a 1:1 pixel push, no gamma — crisp framebuffer = crisp panel; remaining "blur" is optical bloom, judged by counter size. See memory `reference_pixel_font_native_sizes`.
+- **LiveBig layout is per-corner now**, not scores-between-logos. `render.DrawTextTracked(...,extra)` controls inter-digit spacing (−1 = 1px gap, fits 3-digit in 18px). `scenes.statusTwoLines` splits period/clock.
+- **Design workflow that worked** (reuse for next layout): hand-design in Piskel at 64×32 (distinct flat color per element) → export 1:1 PNG → extract exact pixel boxes → pixel-diff the `--sim` render → ONE hardware photo for bloom. Beats interpreting panel photos by a mile.
+- **ImageMagick has no rsvg-convert on the Mac** → it renders `userSpaceOnUse` SVG gradients as solid BLACK. Solid-fill tiny gradients (or install librsvg) before rasterizing brand SVGs. (Bit PR #13.)
+- **Admin screen REMOVED, not gated** (#10): catalog edits are operator/out-of-band, no JWT role system.
+- **Live-view layout is PER-LEAGUE** (`device_leagues.display_layout` ∈ {stacked, side_by_side}); value strings are a hard contract across Go + DB + web UI.
+- **Security gates block on CRITICAL only** (not high) until #27 lands the Next.js major upgrade.
 
-**Decisions — don't relitigate:** fresh history was intentional (old main = stale Gas Town experiment). New repo is PUBLIC (Steve's call). The designs/.pen corpus is a point-in-time baseline — reconcile-later, not per-feature. CLAUDE.md only lightly rebranded (title); a fuller Pixtron pass is optional.
+**Shipped (for reference — git log is canonical):** PR#11 Pixtron brand assets + README banner · PR#12 web-admin favicon/login/nav brand (#28) · PR#13 fix wordmark "R" black-dot + slim README banner ~140KB→20KB · PR#15 LiveBig redesign (big-logo per-corner layout, 04B_24@16 crisp scores, DrawTextTracked, --demo-live-big/--demo-scores dev flags). Closed: #28.
 
 ## Active
-
-### #1 — Route Go scoreboard work through Forge engineer (after Go lands in container)
-**Note from #6:** the matrix C-lib provisioning (`scripts/install_rgbmatrix.sh`, `librgbmatrix.a`) is Pi-only and stays OUT of the container. The container build must use the no-CGO `matrix_stub.go` path (`go build ./...`, no `-tags matrix`). Pi-only C-lib/hardware setup is tracked under #5, not here.
 
 ### #5 — Automate Pi deploy via Tailscale + GitHub Actions (replaces manual SSH workflow)
 **Survivors from #6 (Python removal) this ticket must convert** — #6 deleted the Python app but deliberately LEFT these Pi-infra scripts as reusable templates. They still reference Python and will NOT work as-is:
@@ -58,20 +57,6 @@ The `fetch_nhl_assets.py` script requires `cairosvg` which needs the `libcairo2-
 - `scripts/hardware_self_test.sh` — python3-based matrix test; convert to a Go `--sim`/hardware check or drop.
 
 ### #8 — Live snapshot from device — replaces removed Canvas preview
-
-### #10 — Add admin role + gate the global Sports & Leagues catalog
-Multi-tenant gap (pre-existing): the global sports/leagues/league_teams catalog RLS guard is auth.role() = 'authenticated' (migration 002_rls_policies.sql) — ANY signed-in user can edit shared catalog data that affects ALL users' devices (delete a league, change season dates, edit the team directory).
-
-Decision (2026-05-28): for the web-admin redesign, screen 06 (admin Sports & Leagues catalog) ships OPEN to authenticated users for now, to unblock testing. Lock it down later via this ticket.
-
-Scope:
-- Introduce an admin role — Supabase app_metadata/JWT claim, or a profiles/user_roles table.
-- Gate the Admin nav item + the /admin/sports-leagues route SERVER-SIDE (route guard / RLS), not just UI hiding.
-- Tighten the sports / leagues / league_teams RLS policies to require admin instead of merely authenticated.
-- Implement the 403 / forbidden state already designed in frame 06.
-
-Ref: designs/web-admin-redesign-handoff.md sections 6.5 and 11 (Q3). The 6 user-facing screens (dashboard, onboarding, teams, settings, picker) need no roles; this is catalog-curation gating only.
-
 
 ### #11 — Forge: feature build phase should dispatch per-discipline specialists, not one generic engineer
 Observed 2026-05-28 on the web-admin redesign (run-web-admin-redesign-honest-2-tab-device-config-8ecb5c). The tech-lead plan tagged each step discipline (steps 1-4 backend, 5-6 frontend), but the feature-ui-design-provided build phase dispatched ONE generic engineer for the whole wave; the discipline tags were unused for routing. CLAUDE.md describes the intent as "engineer (specialist per step)" — mismatch. Result: the generalist twice dropped frontend craft (a11y semantics, invalid disabled-on-datalist-option duplicate-favorites bug, skipped/ignored browser-tools visual verification). Ask: make the build phase fan out per the plan discipline tags (frontend-specialist for frontend steps, backend-specialist for backend), or document that build is intentionally single-engineer. This is a Forge tooling issue, not a scoreboard-app issue.
@@ -94,7 +79,128 @@ ALSO: instruct specialist passes to NEVER create/modify web-admin/.env.local (it
 This is what makes the rest of the redesign actually verifiable.
 
 
+### #20 — E2E: dashboard empty-state test via a dedicated no-device QA user
+Follow-up from the E2E suite build. The empty-state assertion ('No devices yet') conflicts with the per-test device-seeding fixture in the same auth context. Clean answer: a SEPARATE QA user that owns zero devices, with its own storageState, so the empty-state test isn't fighting the seed/sweep used by the device-owning QA user (qa@bargelt.com). Small: add a second programmatic login (e.g. qa-empty@bargelt.com) in globalSetup writing a second storageState, and one spec using that project/state asserting the empty-state dashboard renders. Deferred intentionally during the fixture + add-device + teams-save batch.
+
+
+### #21 — Lock global catalog tables (sports/leagues/league_teams) to read-only for authenticated users via RLS
+Replaces the RLS half of the now-closed #10 (the UI-gating and admin-role halves were resolved by removing the admin screen — PR #1 / 23be072).
+
+Problem (pre-existing, multi-tenant gap): the shared catalog tables sports / leagues / league_teams currently allow writes from any authenticated user (RLS guard auth.role() = 'authenticated', migration 002_rls_policies.sql). With the admin UI gone there is no user-facing writer, but the RLS hole still lets any signed-in user edit shared catalog data directly via the Supabase client — affecting ALL users' devices (delete a league, change season dates, edit the team directory).
+
+Decision context: 'admin' is a single platform-operator concept, NOT a per-tenant role. There is no JWT role claim or user_roles table — we deliberately descoped that. Catalog writes happen out-of-band by the operator (service-role key / migrations / scripts), coupled to Go fetcher work.
+
+Scope:
+- Tighten RLS on sports, leagues, league_teams: SELECT stays open to authenticated; INSERT/UPDATE/DELETE denied to authenticated (writes only via service-role).
+- Verify the Go app (read-only catalog consumer) and any operator scripts still function under the new policies.
+- New migration in supabase/migrations/ (next number), applied via `supabase db push`.
+
+Defense-in-depth: the user-facing app no longer writes the catalog, so this is closing the direct-Postgres-client path, not unblocking a feature.
+
+
+### #24 — web-admin: rename a device (edit device name)
+Users can't change a device's name after creation. Add the ability to edit devices.name.
+
+- UI: an editable name field / inline edit on the device Settings tab (near the existing Danger Zone delete).
+- API: PATCH (or PUT) /api/device/[id] accepting { name }, owner-scoped via RLS (user-scoped client), mirroring the delete-device route.
+- Validate non-empty / trimmed; reflect the new name in the dashboard + header.
+
+Small UX gap noticed 2026-05-29.
+
+
+### #25 — web-admin: Teams screen save button 'Save Teams' -> 'Save'
+On the device Teams tab (DeviceTeamsTab.tsx), the save button reads 'Save Teams'. Shorten to just 'Save'. Trivial label change.
+
+
+### #26 — web-admin: 'Unsaved changes' toast causes the page to jump down
+The unsaved-changes notification/toast (on the device Teams/config screen) shifts page layout when it appears — the content jumps down, which is jarring. Reposition so it doesn't reflow the page: overlay/fixed-position (e.g. a sticky bar or floating toast) rather than an inline element that pushes content. Noticed 2026-05-29.
+
+
+### #27 — Upgrade Next.js (14.2.35) to clear high-severity CVEs
+web-admin runs next@14.2.35, which carries multiple HIGH-severity advisories (HTTP request deserialization DoS, Server Components DoS, i18n middleware/proxy bypass, WebSocket SSRF) plus moderates (image-optimizer DoS, request smuggling, cache poisoning). All fix only via a major Next.js upgrade (npm audit fix --force → next@15/16), which is a breaking migration.
+
+Until then, CI gates Security Audit (npm audit / audit-ci) and Dependency Review are set to block on CRITICAL only (not high), so they don't red every PR on these framework advisories — see ci.yml / code-quality.yml. After upgrading, tighten both back to high.
+
+Scope: bump Next.js (and eslint-config-next) to a patched major; fix breaking changes; re-run the suite + E2E; then restore audit thresholds to high.
+
+
+## Done (recent)
+
+### #28 — web-admin: wire Pixtron brand (favicon, login + header logo)
+**Closed:** 2026-05-30.
+
+Brand assets now live in repo root `brand/` (source SVGs + PNG/ICO exports). Wire them into web-admin:
+
+1. Favicon / app icons (Next.js 14 App Router auto-conventions):
+   - Add `web-admin/app/icon.svg` (copy brand/pixtron-lettermark.svg) OR app/favicon.ico (copy brand/favicon.ico)
+   - Add `web-admin/app/apple-icon.png` (copy brand/apple-touch-icon.png, 180x180)
+   - Confirm <head> emits the right link tags after build.
+2. Login page: add the Pixtron wordmark above the auth form.
+3. Dashboard header/nav: add the lettermark (or small wordmark) as the brand mark, linking home.
+   - Copy display assets into web-admin/public/brand/ and reference via next/image with width/height + alt='Pixtron'.
+
+Assets bake in a charcoal #1A1A1A bg (fine for the dark UI). Keep value-string/layout contracts untouched — pure presentational add.
+Acceptance: build passes, favicon shows in tab, wordmark on login, mark in header; screenshots on light+dark if applicable.
+
+
+### #23 — Wire the big side-by-side LiveBig layout for single live games (20x20 banner logos)
+**Closed:** 2026-05-30. Commit `43a298d`.
+
+The LiveBig scene (internal/scenes/live_big.go) already exists and renders a single game side-by-side with 20x20 banner logos, properly BiLinear-scaled via pasteLogo — far more legible than the stacked Live scene's 10x10 logos. But currentScene() in cmd/scoreboard/main.go never selects it: StateLive always returns scenes.Live (stacked, tiny logos).
+
+Scope:
+- In currentScene(), return scenes.LiveBig for live games (single chosen game). Decide whether to keep Live at all (e.g. fallback) or replace it.
+- Reconcile the trade-off: LiveBig shows smaller scores (smallFace, centered) vs Live's big 16px score digits. May want to enlarge LiveBig scores.
+- Verify intermission status line ("Int 2 04:36") still renders well in LiveBig (it draws statusLine at top, y=7).
+- Confirm banner variants exist for displayed leagues (WNBA + NHL via fetch-logos).
+
+Context: came out of the NHL logo fix (PR #4). The stacked view is "small but correct" after that fix; this makes single games actually look good. Logos are gitignored / Pi-only.
+
+
+### #22 — Modernize GitHub Actions workflows for current Pixtron (fix CI, add go-scoreboard coverage)
+**Closed:** 2026-05-30. Commit `5f17111`.
+
+The .github/workflows/*.yml are generic Next.js scaffold boilerplate, never adapted to current Pixtron. main has failed CI on every commit since the initial commit. Keep the checks (Steve wants CI/CD); fix the wiring, drop the fake parts, add the missing Go coverage.
+
+Decisions made (2026-05-29): keep prettier gate but format the repo ONCE first (lint-staged stays for pre-commit, CI is the backstop); drop Node matrix to 20.x only; all required values go in repo SECRETS (Steve adds them).
+
+FIX:
+- ci.yml build job: already wired to secrets.NEXT_PUBLIC_SUPABASE_URL / _ANON_KEY — unblocked once secrets exist. (Steve adds: CLAUDE_CODE_OAUTH_TOKEN, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, optional CODECOV_TOKEN.)
+- ci.yml security job: raise npm audit + audit-ci threshold moderate -> high (unfixable transitive moderates from postcss/ws/yaml need a Next 16 breaking bump; don't block on noise).
+- ci.yml test job: drop 18.x from the matrix, keep 20.x.
+- code-quality.yml: one-time prettier --write across web-admin/src (6 files currently fail --check: Layout.tsx, Navigation.tsx, CopyRow.test.tsx, Button.tsx, Card.tsx, globals.css), then keep the --check gate. Verify a .prettierrc matching existing style exists (only 6 files drifted, so the rest already match defaults).
+
+REMOVE:
+- ci.yml deploy-staging / deploy-production / notify jobs (placeholder echo stubs; develop branch doesn't exist; real Pi deploy is ticket #5).
+- develop from branch triggers (main only).
+
+ADD:
+- go-scoreboard CI: setup-go (go-version-file: go-scoreboard/go.mod), working-directory go-scoreboard, run go build ./..., go vet ./..., go test ./... WITHOUT -tags matrix (stub backend, no CGO/hardware — runs clean on ubuntu runner). The active project currently has zero CI.
+
+Claude workflows (claude.yml, claude-code-review.yml) are fine by design — the empty ANTHROPIC_API_KEY in the failed run traces to the unset CLAUDE_CODE_OAUTH_TOKEN secret. Consider pinning anthropics/claude-code-action to a SHA.
+
+Validation: the real end-to-end check is opening a PR with these changes and watching the modernized pipeline go green on its own PR.
+
+
+### #10 — Add admin role + gate the global Sports & Leagues catalog
+**Closed:** 2026-05-30. Commit `23be072`.
+
+Multi-tenant gap (pre-existing): the global sports/leagues/league_teams catalog RLS guard is auth.role() = 'authenticated' (migration 002_rls_policies.sql) — ANY signed-in user can edit shared catalog data that affects ALL users' devices (delete a league, change season dates, edit the team directory).
+
+Decision (2026-05-28): for the web-admin redesign, screen 06 (admin Sports & Leagues catalog) ships OPEN to authenticated users for now, to unblock testing. Lock it down later via this ticket.
+
+Scope:
+- Introduce an admin role — Supabase app_metadata/JWT claim, or a profiles/user_roles table.
+- Gate the Admin nav item + the /admin/sports-leagues route SERVER-SIDE (route guard / RLS), not just UI hiding.
+- Tighten the sports / leagues / league_teams RLS policies to require admin instead of merely authenticated.
+- Implement the 403 / forbidden state already designed in frame 06.
+
+Ref: designs/web-admin-redesign-handoff.md sections 6.5 and 11 (Q3). The 6 user-facing screens (dashboard, onboarding, teams, settings, picker) need no roles; this is catalog-curation gating only.
+
+
 ### #16 — Admin Add League is inert today — make leagues data-driven (api_config + generic ESPN fetcher) or remove the button
+**Closed:** 2026-05-30. Commit `23be072`.
+
 FINDING: the admin "Add League" control is currently a lying control. The Go app dispatches via a STATIC registry in go-scoreboard/internal/sports/aggregator.go (registry[code]) with only wnba -> FetchWNBA and nhl -> FetchNHL registered, each a hardcoded fetcher. An admin-added league row gets no Go fetcher -> errUnknownLeague -> the league is enabled/selectable but never displays a game on the panel.
 
 The data model already anticipated data-driven leagues: leagues.api_config JSONB ("API configuration") exists for exactly this but is UNUSED. It is also not included in get_device_configuration, so it never reaches the device.
@@ -108,11 +214,10 @@ OPTIONS:
 DECISION NEEDED (Steve, 2026-05-28): A now + B as the multi-league feature, or prioritize B. B2 (uncommitted) currently ships an Add League dialog — if A, remove/disable it before committing B2.
 
 
-### #20 — E2E: dashboard empty-state test via a dedicated no-device QA user
-Follow-up from the E2E suite build. The empty-state assertion ('No devices yet') conflicts with the per-test device-seeding fixture in the same auth context. Clean answer: a SEPARATE QA user that owns zero devices, with its own storageState, so the empty-state test isn't fighting the seed/sweep used by the device-owning QA user (qa@bargelt.com). Small: add a second programmatic login (e.g. qa-empty@bargelt.com) in globalSetup writing a second storageState, and one spec using that project/state asserting the empty-state dashboard renders. Deferred intentionally during the fixture + add-device + teams-save batch.
+### #1 — Route Go scoreboard work through Forge engineer (after Go lands in container)
+**Closed:** 2026-05-29.
 
-
-## Done (recent)
+**Note from #6:** the matrix C-lib provisioning (`scripts/install_rgbmatrix.sh`, `librgbmatrix.a`) is Pi-only and stays OUT of the container. The container build must use the no-CGO `matrix_stub.go` path (`go build ./...`, no `-tags matrix`). Pi-only C-lib/hardware setup is tracked under #5, not here.
 
 ### #14 — Favorite teams: no reorder in new Teams tab (regression) + priority not persisted
 **Closed:** 2026-05-29. Commit `c3326c6`.

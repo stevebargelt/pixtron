@@ -1,0 +1,14 @@
+# TEST 2 — Claude-only policy. Copy to model-policy.yml to activate, remove after.
+# Confirms Crawl behavior (policy mode, all roles -> Claude) still works post-Walk/#227.
+on_unavailable: fail
+model_profiles:
+  claude-subscription:
+    provider: anthropic
+    auth: subscription
+    map:
+      default: { model: claude-sonnet-4-6, cost_tier: standard }
+      review:  { model: claude-sonnet-4-6, cost_tier: standard }
+defaults:
+  profile: claude-subscription
+  activity: {}
+allowed_profiles: [claude-subscription]

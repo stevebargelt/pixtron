@@ -1,0 +1,25 @@
+# TEST 3 — Mixed-provider policy. Copy to model-policy.yml to activate, remove after.
+# The "provider abstraction works" proof: engineer runs on Claude, the frontend
+# red runs on Codex — same task, two providers, routed entirely by policy.
+on_unavailable: fail
+model_profiles:
+  claude-subscription:
+    provider: anthropic
+    auth: subscription
+    map:
+      default: { model: claude-sonnet-4-6, cost_tier: standard }
+      review:  { model: claude-sonnet-4-6, cost_tier: standard }
+  codex-subscription:
+    provider: openai
+    auth: subscription
+    map:
+      default: { model: gpt-5.5, cost_tier: standard }
+      review:  { model: gpt-5.5, cost_tier: standard }
+defaults:
+  profile: claude-subscription
+  activity: {}
+overrides:
+  agents:
+    engineer: claude-subscription      # implements on Claude
+    red-frontend: codex-subscription   # reviews the diff on Codex
+allowed_profiles: [claude-subscription, codex-subscription]
