@@ -34,7 +34,7 @@ test('layout-picker: change league to side-by-side, save, reload, layout persist
   expect(sideBySideClassAfterClick).not.toContain('border-[var(--color-border)]')
 
   // Save
-  await page.getByRole('button', { name: /save teams/i }).click()
+  await page.getByRole('button', { name: /^save$/i }).click()
   await expect(page.getByText('Teams saved. Panel updates on its next poll.')).toBeVisible({
     timeout: 10_000,
   })

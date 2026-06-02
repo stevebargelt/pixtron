@@ -40,7 +40,7 @@ test('teams-save round-trip: enable league, add team, save, reload, verify persi
   // Add the favorite, then save.
   await addTeamInput.fill(teamName!)
   await expect(leagueCard.locator('button[aria-label^="Remove "]')).toBeVisible({ timeout: 5_000 })
-  await page.getByRole('button', { name: /save teams/i }).click()
+  await page.getByRole('button', { name: /^save$/i }).click()
   await expect(page.getByText('Teams saved. Panel updates on its next poll.')).toBeVisible({
     timeout: 10_000,
   })

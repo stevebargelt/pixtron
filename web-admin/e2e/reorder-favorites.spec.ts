@@ -64,7 +64,7 @@ test('reorder-favorites: reorder persists via migration 006', async ({ page, see
   }
 
   // ── Step 4: save, capture initial DB state, reload, confirm T1 T2 T3 ──────
-  await page.getByRole('button', { name: /save teams/i }).click()
+  await page.getByRole('button', { name: /^save$/i }).click()
   await expect(page.getByText('Teams saved. Panel updates on its next poll.')).toBeVisible({
     timeout: 10_000,
   })
@@ -163,7 +163,7 @@ test('reorder-favorites: reorder persists via migration 006', async ({ page, see
   console.log(`After:  [${reorderedLabels.join(', ')}]`)
 
   // ── Step 7: save the reordered state ─────────────────────────────────────
-  await page.getByRole('button', { name: /save teams/i }).click()
+  await page.getByRole('button', { name: /^save$/i }).click()
   await expect(page.getByText('Teams saved. Panel updates on its next poll.')).toBeVisible({
     timeout: 10_000,
   })
