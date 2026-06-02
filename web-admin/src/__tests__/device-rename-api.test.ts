@@ -79,7 +79,7 @@ function makeRes() {
 }
 
 describe('PATCH /api/device/[id] – rename handler integration', () => {
-  let handler: (req: NextApiRequest, res: NextApiResponse) => Promise<void>
+  let handler: (req: NextApiRequest, res: NextApiResponse) => Promise<void | NextApiResponse>
 
   beforeAll(async () => {
     const mod = await import('../pages/api/device/[id]/index')
