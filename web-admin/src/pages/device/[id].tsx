@@ -246,7 +246,7 @@ export default function DevicePage() {
               {settingsIsDirty && (
                 <div
                   role="alert"
-                  className="rounded-token-sm bg-amber-soft border border-[var(--color-amber)] px-4 py-2 text-sm text-amber-fg"
+                  className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-token-sm bg-amber-soft border border-[var(--color-amber)] px-4 py-2 text-sm text-amber-fg shadow-lg"
                 >
                   Unsaved changes
                 </div>
