@@ -104,11 +104,11 @@ jobs:
 
     - name: Run security audit
       working-directory: ./web-admin
-      run: npm audit --audit-level critical
+      run: npm audit --audit-level high
 
     - name: Run dependency check
       working-directory: ./web-admin
-      run: npx audit-ci --critical
+      run: npx audit-ci --high
 
   go-scoreboard:
     name: Go Scoreboard
