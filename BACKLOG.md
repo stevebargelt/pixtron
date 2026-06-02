@@ -18,34 +18,35 @@ The `fetch_nhl_assets.py` script requires `cairosvg` which needs the `libcairo2-
 ### BL-005: WNBA teams parser reads venue but ESPN doesn't include it — CLOSED 2026-05-27
 
 ## Notes for next session
-**Last session ended 2026-05-30 — Pixtron branding + LiveBig score/layout redesign.**
+**Last session ended 2026-06-02 — #27 Next.js 15 upgrade shipped; backlog reconciled (PR #20 retired).**
 
-**Where we left off:** Just merged PR #15 — LiveBig rebuilt to Steve's hand-designed per-corner layout (20×20 logos top corners, scores below each logo, vertical WSH/TOR abbrevs flanking center, two-line clock top-center) with crisp `04B_24@16` scores. Verified on the panel across 1/2/3-digit scores via the new `--demo-live-big` flag. Earlier in the session: shipped the whole Pixtron brand (logo assets + README banner + web-admin favicon/login/nav). Steve approved and we merged; session ended cleanly.
+**Where we left off:** Shipped #27 — upgraded web-admin from next@14.2.35 to next@15.5.19 (React runtime stays 18) and restored the three CI audit gates from CRITICAL-only back to `high`. Merged as PR #21 (squash cb40598); CI fully green including the restored high gates running for real (proves the highs are genuinely cleared, not just threshold-loosened). Forge chain: engineer -> test-engineer (193/193, +4 E2E) -> red-security (no regressions). A mid-way `npm ci` peer-dep failure (CI strict install rejected @types/react-dom@18 vs @types/react@19) was fixed by aligning both @types/react* to ^19. Also reconciled the backlog: closed #24/#25/#26/#27, and PR #20 (a prior session's never-merged backlog handoff) was superseded and closed unmerged — its only unique content (the #24/#26 closes) was folded in here.
 
-**Picked up next:**
-1. **Verify new LiveBig on a REAL live game.** We only confirmed via `--demo-live-big --demo-scores`; the live path (real ESPN data, intermission/halftime two-line status) hasn't been eyeballed on hardware. On the Pi: `cd ~/pixtron && git checkout main && git pull && cd go-scoreboard && go build -tags matrix -o scoreboard-matrix ./cmd/scoreboard && sudo ./scoreboard-matrix` (Steve runs sudo).
-2. **web-admin quick-hits, all route through Forge:** #25 (button "Save Teams"→"Save", one-liner), #26 (unsaved-changes toast shifts page layout — reposition), #24 (rename a device — needs PATCH /api/device/[id] + Settings UI).
-3. **#27 Upgrade Next.js** (14.2.35 → 15/16) to clear high CVEs, THEN tighten audit gates back to `high`.
-4. Older still-open: #21 (catalog RLS lockdown), #20 (empty-state E2E), #8 (live snapshot from device), #5 (Pi deploy automation via Tailscale), #15 (dev/QA auth bypass — recheck if still meaningful post admin-removal), #11/#12 (forge meta).
+**Picked up next (pick one — Steve owns the call):**
+1. **#29** web-admin: GET /api/sports allows unauthenticated team enumeration (low, pre-existing; decide document-as-public vs wrap withAuth). Surfaced by red-security during #27.
+2. **#30** web-admin: Next 15 logs a warning on `return res.json()` in Pages Router API handlers (low/cosmetic; drop the `return` before res.json() across src/pages/api/**). Surfaced by test-engineer during #27.
+3. **#20** E2E dashboard empty-state via a dedicated no-device QA user · **#21** lock catalog tables read-only via RLS · **#15** dev/QA auth bypass (recheck relevance post admin-removal).
+4. **#8** live snapshot from device · **#5** Pi deploy automation via Tailscale · **#11/#12** forge meta.
+
+**Uncommitted working state to resolve:** CLAUDE.md is modified (forge-upgrade orchestrator-template re-render adding the documentation-maintainer role) and .forge/docs-surfaces.yml is untracked (forge config). Both are forge-upgrade artifacts, unrelated to #27 — offered to commit as a small chore; not yet done.
 
 **External state to remember:**
 - Pi: SSH alias `led-scoreboard-3`, IP `192.168.68.72` (DHCP, mDNS flaky — re-check on SSH fail). go-scoreboard dev loop is on the Pi (Forge can't reach GPIO). Steve runs `sudo` himself.
 - 4 GitHub repo SECRETS wired & working: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, CLAUDE_CODE_OAUTH_TOKEN, CODECOV_TOKEN.
 - Migrations through 008 applied to remote Supabase via `supabase db push`.
-- Brand assets live in repo-root `brand/` (source SVGs + PNG/ICO exports) — NOT `assets/`, which root `.gitignore` swallows. web-admin uses `public/brand/` + `app`-equivalent favicon tags in `_document.tsx` (Pages Router, not App Router).
-- WNBA logos exist locally on the Mac at `assets/logos/` (500px sources) + `assets/logos/variants/` (10px mini, 20px banner). TOR (Toronto Tempo, id 131935) banner is on the Pi but NOT local — renders blank in Mac sim only.
-- Stray file: `designs/compare.png` is untracked in the working tree (leftover artifact) — delete or ignore.
+- CI runs strict `npm ci` — validate forge-authored web-admin dep changes with `npm ci` (not lenient `npm install`) before pushing, or the lockfile can pass locally and fail CI.
+- Brand assets live in repo-root `brand/` (NOT `assets/`, which root .gitignore swallows). web-admin uses `public/brand/` + favicon tags in `_document.tsx` (Pages Router).
+- WNBA logos exist locally on the Mac at `assets/logos/` (500px) + `assets/logos/variants/`. TOR (Toronto Tempo, id 131935) banner is on the Pi but NOT local — blank in Mac sim only.
 
 **Decisions worth not relitigating:**
-- **LiveBig score = `04B_24@16`.** The blur saga's real answer. Pixel fonts (04B_03/04B_24/score_large) are crisp ONLY at size 8/16 (off-grid = AA blur). `score_large@16` is crisp in the framebuffer but its 1px counters BLOOM SHUT on the panel → blobs. `04B_24@16` has open counters that survive bloom (lit cap height = 10px). Hardware path (`matrix.go`) is a 1:1 pixel push, no gamma — crisp framebuffer = crisp panel; remaining "blur" is optical bloom, judged by counter size. See memory `reference_pixel_font_native_sizes`.
-- **LiveBig layout is per-corner now**, not scores-between-logos. `render.DrawTextTracked(...,extra)` controls inter-digit spacing (−1 = 1px gap, fits 3-digit in 18px). `scenes.statusTwoLines` splits period/clock.
-- **Design workflow that worked** (reuse for next layout): hand-design in Piskel at 64×32 (distinct flat color per element) → export 1:1 PNG → extract exact pixel boxes → pixel-diff the `--sim` render → ONE hardware photo for bloom. Beats interpreting panel photos by a mile.
-- **ImageMagick has no rsvg-convert on the Mac** → it renders `userSpaceOnUse` SVG gradients as solid BLACK. Solid-fill tiny gradients (or install librsvg) before rasterizing brand SVGs. (Bit PR #13.)
-- **Admin screen REMOVED, not gated** (#10): catalog edits are operator/out-of-band, no JWT role system.
-- **Live-view layout is PER-LEAGUE** (`device_leagues.display_layout` ∈ {stacked, side_by_side}); value strings are a hard contract across Go + DB + web UI.
-- **Security gates block on CRITICAL only** (not high) until #27 lands the Next.js major upgrade.
+- **next stays on a patched 15.x, React runtime stays 18.** @types/react* are at ^19 (types ahead of runtime — intentional, type-check passes); do NOT bump react/react-dom runtime to 19 without a separate decision.
+- **Security gates are back to `high`** (ci.yml npm audit + audit-ci, code-quality.yml dependency-review). 2 moderate postcss advisories remain (bundled inside next; unfixable without a next release) — acceptable, below the gate.
+- **LiveBig score = 04B_24@16**, layout is per-corner; hardware-verified on a live game. See memory reference_pixel_font_native_sizes.
+- **Admin screen REMOVED, not gated** (#10); catalog edits are operator/out-of-band, no JWT role system.
+- **Live-view layout is PER-LEAGUE** (device_leagues.display_layout in {stacked, side_by_side}); value strings are a hard contract across Go + DB + web UI.
+- **Forge container skips tsc + prettier** (jest transpiles only) -> run real type-check + prettier locally before pushing forge-authored web-admin code. Memory: reference_forge_edits_persist_in_worktree.
 
-**Shipped (for reference — git log is canonical):** PR#11 Pixtron brand assets + README banner · PR#12 web-admin favicon/login/nav brand (#28) · PR#13 fix wordmark "R" black-dot + slim README banner ~140KB→20KB · PR#15 LiveBig redesign (big-logo per-corner layout, 04B_24@16 crisp scores, DrawTextTracked, --demo-live-big/--demo-scores dev flags). Closed: #28.
+**Shipped recently (git log is canonical):** PR#21 -> #27 Next.js 15.5.19 upgrade + audit gates to high + 4 E2E tests · PR#16 -> #24 device rename · PR#17 -> #26 toast float (carried #25 Save label) · PR#15 LiveBig redesign (hardware-verified). Closed: #24, #25, #26, #27. PR #20 closed unmerged (superseded).
 
 ## Active
 
@@ -98,7 +99,39 @@ Scope:
 Defense-in-depth: the user-facing app no longer writes the catalog, so this is closing the direct-Postgres-client path, not unblocking a feature.
 
 
+### #29 — web-admin: GET /api/sports allows unauthenticated team enumeration
+Surfaced by red-security during the #27 Next.js upgrade audit (PR #21). PRE-EXISTING — not introduced by the upgrade.
+
+`GET /api/sports` (web-admin/src/pages/api/sports/index.ts) responds without any auth check, so any unauthenticated client can enumerate all active league teams (names, abbreviations, conferences, divisions). This is low-grade information disclosure IF league composition is considered sensitive; it is likely intentional (public reference data needed for initial page load before sign-in).
+
+Decision needed:
+- If the data is genuinely public reference data: document the intentional no-auth design (a comment in the handler + a note wherever API auth conventions live) so it isn't flagged again.
+- If not: wrap the handler with the existing `withAuth` helper (web-admin/src/lib/auth.ts) to require a valid Bearer token.
+
+Severity: low (residual risk, confidence ~0.7). No action is strictly required for #27; filing so the decision is explicit and tracked.
+
+
+### #30 — web-admin: Next 15 warns on 'return res.json()' in Pages Router API handlers
+Surfaced by test-engineer during the #27 Next.js 15 upgrade (PR #21). Introduced by the bump; warning only, NO functional impact (all API routes respond correctly and all 193 tests pass).
+
+Next.js 15 logs `[WebServer] API handler should not return a value, received object.` because the Pages Router API routes use `return res.status(N).json(...)`, which returns the NextApiResponse object. Next 15 now warns when a handler returns a non-undefined value.
+
+Fix: drop the `return` keyword before `res.json()` / `res.status().json()` calls across web-admin/src/pages/api/**, converting them to early-return guards that call res.json() without capturing/returning its value. Pure cleanup — quiets the log noise, no behavior change.
+
+Severity: low / cosmetic. Route through Forge (engineer) when convenient; bundle with other API-route touch-ups if any come up.
+
+
+## Done (recent)
+
+### #26 — web-admin: 'Unsaved changes' toast causes the page to jump down
+**Closed:** 2026-06-02. Commit `ca5540c`.
+
+The unsaved-changes notification/toast (on the device Teams/config screen) shifts page layout when it appears — the content jumps down, which is jarring. Reposition so it doesn't reflow the page: overlay/fixed-position (e.g. a sticky bar or floating toast) rather than an inline element that pushes content. Noticed 2026-05-29.
+
+
 ### #24 — web-admin: rename a device (edit device name)
+**Closed:** 2026-06-02. Commit `c51b9dd`.
+
 Users can't change a device's name after creation. Add the ability to edit devices.name.
 
 - UI: an editable name field / inline edit on the device Settings tab (near the existing Danger Zone delete).
@@ -108,15 +141,9 @@ Users can't change a device's name after creation. Add the ability to edit devic
 Small UX gap noticed 2026-05-29.
 
 
-### #25 — web-admin: Teams screen save button 'Save Teams' -> 'Save'
-On the device Teams tab (DeviceTeamsTab.tsx), the save button reads 'Save Teams'. Shorten to just 'Save'. Trivial label change.
-
-
-### #26 — web-admin: 'Unsaved changes' toast causes the page to jump down
-The unsaved-changes notification/toast (on the device Teams/config screen) shifts page layout when it appears — the content jumps down, which is jarring. Reposition so it doesn't reflow the page: overlay/fixed-position (e.g. a sticky bar or floating toast) rather than an inline element that pushes content. Noticed 2026-05-29.
-
-
 ### #27 — Upgrade Next.js (14.2.35) to clear high-severity CVEs
+**Closed:** 2026-06-02. Commit `cb40598`.
+
 web-admin runs next@14.2.35, which carries multiple HIGH-severity advisories (HTTP request deserialization DoS, Server Components DoS, i18n middleware/proxy bypass, WebSocket SSRF) plus moderates (image-optimizer DoS, request smuggling, cache poisoning). All fix only via a major Next.js upgrade (npm audit fix --force → next@15/16), which is a breaking migration.
 
 Until then, CI gates Security Audit (npm audit / audit-ci) and Dependency Review are set to block on CRITICAL only (not high), so they don't red every PR on these framework advisories — see ci.yml / code-quality.yml. After upgrading, tighten both back to high.
@@ -124,7 +151,11 @@ Until then, CI gates Security Audit (npm audit / audit-ci) and Dependency Review
 Scope: bump Next.js (and eslint-config-next) to a patched major; fix breaking changes; re-run the suite + E2E; then restore audit thresholds to high.
 
 
-## Done (recent)
+### #25 — web-admin: Teams screen save button 'Save Teams' -> 'Save'
+**Closed:** 2026-06-02. Commit `ca5540c`.
+
+On the device Teams tab (DeviceTeamsTab.tsx), the save button reads 'Save Teams'. Shorten to just 'Save'. Trivial label change.
+
 
 ### #28 — web-admin: wire Pixtron brand (favicon, login + header logo)
 **Closed:** 2026-05-30.
