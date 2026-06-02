@@ -25,15 +25,17 @@ beforeEach(() => {
     error: null,
   })
 
-  maybeSingleMock.mockResolvedValue({ data: { id: 'device-uuid', user_id: 'user-uuid' }, error: null })
+  maybeSingleMock.mockResolvedValue({
+    data: { id: 'device-uuid', user_id: 'user-uuid' },
+    error: null,
+  })
   eqMock.mockReturnValue({ maybeSingle: maybeSingleMock })
   selectMock.mockReturnValue({ eq: eqMock })
   deleteMock.mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) })
   updateMock.mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) })
 
   fromMock.mockImplementation((table: string) => {
-    if (table === 'devices')
-      return { select: selectMock, delete: deleteMock, update: updateMock }
+    if (table === 'devices') return { select: selectMock, delete: deleteMock, update: updateMock }
     return {}
   })
 
@@ -170,7 +172,11 @@ describe('PATCH /api/device/[id] – rename device', () => {
 
   it('returns 401 when no auth header', async () => {
     const handler = await loadHandler()
-    const req = createRequest({ method: 'PATCH', headers: { authorization: '' }, body: { name: 'X' } })
+    const req = createRequest({
+      method: 'PATCH',
+      headers: { authorization: '' },
+      body: { name: 'X' },
+    })
     const res = createResponse()
 
     await handler(req, res)

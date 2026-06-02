@@ -77,9 +77,11 @@ describe('DevicePage – rename message live-region and fetch guard', () => {
   })
 
   it('shows "Save failed: <status>" with role=alert when PATCH returns a non-JSON error', async () => {
-    global.fetch = jest.fn().mockResolvedValue(
-      makeFetchResponse({ ok: false, status: 502, contentType: 'text/html' })
-    ) as any
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue(
+        makeFetchResponse({ ok: false, status: 502, contentType: 'text/html' })
+      ) as any
 
     await renderOnSettingsTab()
 
@@ -121,7 +123,12 @@ describe('DevicePage – rename message live-region and fetch guard', () => {
 
   it('shows "Name updated." with role=status on successful rename', async () => {
     global.fetch = jest.fn().mockResolvedValue(
-      makeFetchResponse({ ok: true, status: 200, contentType: 'application/json', body: { name: 'Updated' } })
+      makeFetchResponse({
+        ok: true,
+        status: 200,
+        contentType: 'application/json',
+        body: { name: 'Updated' },
+      })
     ) as any
 
     await renderOnSettingsTab()

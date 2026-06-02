@@ -89,9 +89,9 @@ describe('DevicePage – device rename integration', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     // Default fetch: non-ok for all API calls so settings stay at defaults (no dirty banner)
-    global.fetch = jest.fn().mockResolvedValue(
-      makeFetchResponse({ ok: false, status: 404 })
-    ) as unknown as typeof fetch
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue(makeFetchResponse({ ok: false, status: 404 })) as unknown as typeof fetch
     setupSupabaseMocks()
   })
 
@@ -99,7 +99,12 @@ describe('DevicePage – device rename integration', () => {
     it('updates the page h1 heading to reflect the new device name after a successful rename', async () => {
       const newName = 'Game Room Pi'
       global.fetch = makePatchDispatcher(
-        makeFetchResponse({ ok: true, status: 200, contentType: 'application/json', body: { name: newName } })
+        makeFetchResponse({
+          ok: true,
+          status: 200,
+          contentType: 'application/json',
+          body: { name: newName },
+        })
       )
 
       await renderAndOpenSettings()
@@ -152,7 +157,12 @@ describe('DevicePage – device rename integration', () => {
     it('does not call json() on a non-JSON PATCH response and surfaces the status code', async () => {
       const jsonSpy = jest.fn()
       global.fetch = makePatchDispatcher(
-        makeFetchResponse({ ok: false, status: 502, contentType: 'text/html; charset=utf-8', jsonSpy })
+        makeFetchResponse({
+          ok: false,
+          status: 502,
+          contentType: 'text/html; charset=utf-8',
+          jsonSpy,
+        })
       )
 
       await renderAndOpenSettings()
@@ -181,7 +191,12 @@ describe('DevicePage – device rename integration', () => {
 
     it('clears the rename live-region message when the user edits the input after a save', async () => {
       global.fetch = makePatchDispatcher(
-        makeFetchResponse({ ok: true, status: 200, contentType: 'application/json', body: { name: 'First Rename' } })
+        makeFetchResponse({
+          ok: true,
+          status: 200,
+          contentType: 'application/json',
+          body: { name: 'First Rename' },
+        })
       )
 
       await renderAndOpenSettings()

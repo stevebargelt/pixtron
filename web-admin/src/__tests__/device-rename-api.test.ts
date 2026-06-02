@@ -42,10 +42,9 @@ function makeReq(opts: {
   method: string
   deviceId?: string
   body?: object
-  authHeader?: string | null  // null = omit Authorization header entirely
+  authHeader?: string | null // null = omit Authorization header entirely
 }): NextApiRequest {
-  const authValue =
-    opts.authHeader === null ? undefined : (opts.authHeader ?? 'Bearer test-token')
+  const authValue = opts.authHeader === null ? undefined : (opts.authHeader ?? 'Bearer test-token')
   return {
     method: opts.method,
     query: { id: opts.deviceId ?? 'device-abc' },
