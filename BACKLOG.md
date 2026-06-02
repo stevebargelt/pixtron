@@ -18,34 +18,28 @@ The `fetch_nhl_assets.py` script requires `cairosvg` which needs the `libcairo2-
 ### BL-005: WNBA teams parser reads venue but ESPN doesn't include it — CLOSED 2026-05-27
 
 ## Notes for next session
-**Last session ended 2026-05-30 — Pixtron branding + LiveBig score/layout redesign.**
+**Last session ended 2026-06-02 — web-admin quick-hits shipped via Forge + provider-policy machinery tests.**
 
-**Where we left off:** Just merged PR #15 — LiveBig rebuilt to Steve's hand-designed per-corner layout (20×20 logos top corners, scores below each logo, vertical WSH/TOR abbrevs flanking center, two-line clock top-center) with crisp `04B_24@16` scores. Verified on the panel across 1/2/3-digit scores via the new `--demo-live-big` flag. Earlier in the session: shipped the whole Pixtron brand (logo assets + README banner + web-admin favicon/login/nav). Steve approved and we merged; session ended cleanly.
+**Where we left off:** Merged all four open PRs (#16/#17/#18/#19) into main and closed #24/#25/#26. Last open thread: I offered to file a forge-meta ticket to add `npm run type-check` + `prettier --check` to the implementer seeds' mandatory validation (the gap that failed #16's CI twice). Not yet filed — that's the first decision next session.
 
 **Picked up next:**
-1. **Verify new LiveBig on a REAL live game.** We only confirmed via `--demo-live-big --demo-scores`; the live path (real ESPN data, intermission/halftime two-line status) hasn't been eyeballed on hardware. On the Pi: `cd ~/pixtron && git checkout main && git pull && cd go-scoreboard && go build -tags matrix -o scoreboard-matrix ./cmd/scoreboard && sudo ./scoreboard-matrix` (Steve runs sudo).
-2. **web-admin quick-hits, all route through Forge:** #25 (button "Save Teams"→"Save", one-liner), #26 (unsaved-changes toast shifts page layout — reposition), #24 (rename a device — needs PATCH /api/device/[id] + Settings UI).
-3. **#27 Upgrade Next.js** (14.2.35 → 15/16) to clear high CVEs, THEN tighten audit gates back to `high`.
-4. Older still-open: #21 (catalog RLS lockdown), #20 (empty-state E2E), #8 (live snapshot from device), #5 (Pi deploy automation via Tailscale), #15 (dev/QA auth bypass — recheck if still meaningful post admin-removal), #11/#12 (forge meta).
+1. **Decide the forge-meta ticket** (offered, not filed): implementer/test-engineer seeds validate with `forge-test`/jest only, which transpiles without type-checking and never runs prettier — so forge-authored web-admin code passes the container but fails CI Code-Quality (`tsc --noEmit` + `prettier --check`). File alongside #11/#12, or fold into them.
+2. **#27 Upgrade Next.js** (14.2.35 → 15/16) to clear high-severity CVEs, THEN retighten audit gates from CRITICAL-only back to `high`.
+3. Remaining web-admin/infra backlog: #20 (empty-state E2E), #21 (catalog RLS lockdown), #15 (dev/QA auth bypass — recheck relevance post admin-removal), #8 (live snapshot from device), #5 (Pi deploy via Tailscale). Go-side: #13 heartbeat, #9 honor brightness/TZ, #7 poll backoff.
 
 **External state to remember:**
-- Pi: SSH alias `led-scoreboard-3`, IP `192.168.68.72` (DHCP, mDNS flaky — re-check on SSH fail). go-scoreboard dev loop is on the Pi (Forge can't reach GPIO). Steve runs `sudo` himself.
-- 4 GitHub repo SECRETS wired & working: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, CLAUDE_CODE_OAUTH_TOKEN, CODECOV_TOKEN.
-- Migrations through 008 applied to remote Supabase via `supabase db push`.
-- Brand assets live in repo-root `brand/` (source SVGs + PNG/ICO exports) — NOT `assets/`, which root `.gitignore` swallows. web-admin uses `public/brand/` + `app`-equivalent favicon tags in `_document.tsx` (Pages Router, not App Router).
-- WNBA logos exist locally on the Mac at `assets/logos/` (500px sources) + `assets/logos/variants/` (10px mini, 20px banner). TOR (Toronto Tempo, id 131935) banner is on the Pi but NOT local — renders blank in Mac sim only.
-- Stray file: `designs/compare.png` is untracked in the working tree (leftover artifact) — delete or ignore.
+- **BACKLOG.md has uncommitted changes** (the #24/#25/#26 closes + this notes block) — NOT committed/pushed. Needs a small chore branch + PR (no direct-to-main).
+- `.forge/docs-surfaces.yml` untracked (Steve's, open in IDE — leave it).
+- Live `.forge/model-policy.yml` is intentionally ABSENT — only the two `.example` fixtures are committed (PR #19). Policy is project config (NOT gitignored, no secrets); a real active policy is deferred until Steve is ready.
+- Pi unchanged: SSH alias `led-scoreboard-3`; go-scoreboard dev loop stays on the Pi (Forge can't reach GPIO).
 
 **Decisions worth not relitigating:**
-- **LiveBig score = `04B_24@16`.** The blur saga's real answer. Pixel fonts (04B_03/04B_24/score_large) are crisp ONLY at size 8/16 (off-grid = AA blur). `score_large@16` is crisp in the framebuffer but its 1px counters BLOOM SHUT on the panel → blobs. `04B_24@16` has open counters that survive bloom (lit cap height = 10px). Hardware path (`matrix.go`) is a 1:1 pixel push, no gamma — crisp framebuffer = crisp panel; remaining "blur" is optical bloom, judged by counter size. See memory `reference_pixel_font_native_sizes`.
-- **LiveBig layout is per-corner now**, not scores-between-logos. `render.DrawTextTracked(...,extra)` controls inter-digit spacing (−1 = 1px gap, fits 3-digit in 18px). `scenes.statusTwoLines` splits period/clock.
-- **Design workflow that worked** (reuse for next layout): hand-design in Piskel at 64×32 (distinct flat color per element) → export 1:1 PNG → extract exact pixel boxes → pixel-diff the `--sim` render → ONE hardware photo for bloom. Beats interpreting panel photos by a mile.
-- **ImageMagick has no rsvg-convert on the Mac** → it renders `userSpaceOnUse` SVG gradients as solid BLACK. Solid-fill tiny gradients (or install librsvg) before rasterizing brand SVGs. (Bit PR #13.)
-- **Admin screen REMOVED, not gated** (#10): catalog edits are operator/out-of-band, no JWT role system.
-- **Live-view layout is PER-LEAGUE** (`device_leagues.display_layout` ∈ {stacked, side_by_side}); value strings are a hard contract across Go + DB + web UI.
-- **Security gates block on CRITICAL only** (not high) until #27 lands the Next.js major upgrade.
+- **#25 is DONE** but landed bundled inside PR #17 (toast), not its own PR — a Forge orphaned-edit leak: the first #25 run made the `Save Teams`→`Save` edit before idle-timing-out, it persisted in the shared working tree, and rode along in the #26 DeviceTeamsTab.tsx diff. Closed; do NOT re-split or redo. The mid-session "the engineer lied about a no-op" read was WRONG — it was truthful against an already-edited tree.
+- **model-policy.yml is NOT gitignored** — no secrets in it, it's shared project config; only `.example`s committed; active policy deferred by Steve's choice.
+- **Forge container skips `tsc` + `prettier --check`** (jest transpiles only) → always run real type-check + prettier locally before pushing forge-authored web-admin code. Saved as memory `reference_forge_edits_persist_in_worktree`.
+- Provider-policy machinery (3 regression tests) verified: legacy (no policy → bare model, no `resolvedBy`), claude-only (`resolvedBy: defaults.profile`, anthropic/claude-subscription/claude-oauth), mixed (per-agent overrides splitting engineer→anthropic vs red-frontend→openai/gpt-5.5). Working as designed.
 
-**Shipped (for reference — git log is canonical):** PR#11 Pixtron brand assets + README banner · PR#12 web-admin favicon/login/nav brand (#28) · PR#13 fix wordmark "R" black-dot + slim README banner ~140KB→20KB · PR#15 LiveBig redesign (big-logo per-corner layout, 04B_24@16 crisp scores, DrawTextTracked, --demo-live-big/--demo-scores dev flags). Closed: #28.
+**Shipped (for reference — git log is canonical):** PR#16 → #24 device rename (PATCH /api/device/[id] + Settings editor + ARIA live-region + content-type json guard + unit/integration tests + 2 CI fixes) · PR#17 → #26 unsaved-changes toast floats (fixed bottom-center, no reflow) + carried #25 Save label · PR#18 → CLAUDE.md orchestrator-start marker + designs/compare.png · PR#19 → BACKLOG update + .forge model-policy .example fixtures. Closed: #24, #25, #26.
 
 ## Active
 
@@ -98,24 +92,6 @@ Scope:
 Defense-in-depth: the user-facing app no longer writes the catalog, so this is closing the direct-Postgres-client path, not unblocking a feature.
 
 
-### #24 — web-admin: rename a device (edit device name)
-Users can't change a device's name after creation. Add the ability to edit devices.name.
-
-- UI: an editable name field / inline edit on the device Settings tab (near the existing Danger Zone delete).
-- API: PATCH (or PUT) /api/device/[id] accepting { name }, owner-scoped via RLS (user-scoped client), mirroring the delete-device route.
-- Validate non-empty / trimmed; reflect the new name in the dashboard + header.
-
-Small UX gap noticed 2026-05-29.
-
-
-### #25 — web-admin: Teams screen save button 'Save Teams' -> 'Save'
-On the device Teams tab (DeviceTeamsTab.tsx), the save button reads 'Save Teams'. Shorten to just 'Save'. Trivial label change.
-
-
-### #26 — web-admin: 'Unsaved changes' toast causes the page to jump down
-The unsaved-changes notification/toast (on the device Teams/config screen) shifts page layout when it appears — the content jumps down, which is jarring. Reposition so it doesn't reflow the page: overlay/fixed-position (e.g. a sticky bar or floating toast) rather than an inline element that pushes content. Noticed 2026-05-29.
-
-
 ### #27 — Upgrade Next.js (14.2.35) to clear high-severity CVEs
 web-admin runs next@14.2.35, which carries multiple HIGH-severity advisories (HTTP request deserialization DoS, Server Components DoS, i18n middleware/proxy bypass, WebSocket SSRF) plus moderates (image-optimizer DoS, request smuggling, cache poisoning). All fix only via a major Next.js upgrade (npm audit fix --force → next@15/16), which is a breaking migration.
 
@@ -125,6 +101,30 @@ Scope: bump Next.js (and eslint-config-next) to a patched major; fix breaking ch
 
 
 ## Done (recent)
+
+### #25 — web-admin: Teams screen save button 'Save Teams' -> 'Save'
+**Closed:** 2026-06-02. Commit `ca5540c`.
+
+On the device Teams tab (DeviceTeamsTab.tsx), the save button reads 'Save Teams'. Shorten to just 'Save'. Trivial label change.
+
+
+### #26 — web-admin: 'Unsaved changes' toast causes the page to jump down
+**Closed:** 2026-06-02. Commit `ca5540c`.
+
+The unsaved-changes notification/toast (on the device Teams/config screen) shifts page layout when it appears — the content jumps down, which is jarring. Reposition so it doesn't reflow the page: overlay/fixed-position (e.g. a sticky bar or floating toast) rather than an inline element that pushes content. Noticed 2026-05-29.
+
+
+### #24 — web-admin: rename a device (edit device name)
+**Closed:** 2026-06-02. Commit `c51b9dd`.
+
+Users can't change a device's name after creation. Add the ability to edit devices.name.
+
+- UI: an editable name field / inline edit on the device Settings tab (near the existing Danger Zone delete).
+- API: PATCH (or PUT) /api/device/[id] accepting { name }, owner-scoped via RLS (user-scoped client), mirroring the delete-device route.
+- Validate non-empty / trimmed; reflect the new name in the dashboard + header.
+
+Small UX gap noticed 2026-05-29.
+
 
 ### #28 — web-admin: wire Pixtron brand (favicon, login + header logo)
 **Closed:** 2026-05-30.
