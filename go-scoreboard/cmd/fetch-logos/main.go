@@ -207,10 +207,13 @@ func runNHL(assetsDir string) {
 	fmt.Printf("Done: %d updated, %d skipped\n", ok, skipped)
 }
 
-// nhlIDMap collects tricode->numeric team id from recent NHL score feeds — the
-// same source parseNHLGame reads — so the variant filenames match the IDs the
-// app uses. Only currently-active teams appear, which sidesteps the franchise
-// tricode collisions (e.g. UTA) in the static team list.
+// nhlIDMap collects tricode->numeric team id from NHL score feeds — the same
+// source parseNHLGame reads — so the variant filenames match the IDs the app
+// uses. It walks back day by day until all 32 current teams are seen (or the
+// lookback is exhausted), which keeps coverage complete in the offseason/playoffs
+// when only a few teams appear in the most recent days, while still only ever
+// surfacing currently-active ids (sidestepping franchise tricode collisions like
+// UTA in the static team list).
 func nhlIDMap() map[string]int {
 	type scoreTeam struct {
 		ID     int    `json:"id"`
@@ -226,7 +229,9 @@ func nhlIDMap() map[string]int {
 	client := &http.Client{Timeout: 20 * time.Second}
 	out := map[string]int{}
 	day := time.Now()
-	for i := 0; i < 14 && len(out) < 32; i++ {
+	// ~250 days covers a full prior season from anywhere in the offseason; the
+	// loop exits as soon as all 32 current teams are resolved (fast in-season).
+	for i := 0; i < 250 && len(out) < 32; i++ {
 		url := "https://api-web.nhle.com/v1/score/" + day.AddDate(0, 0, -i).Format("2006-01-02")
 		resp, err := client.Get(url)
 		if err != nil {
