@@ -51,6 +51,9 @@ type espnEvent struct {
 type espnCompetition struct {
 	Competitors []espnCompetitor `json:"competitors"`
 	Status      espnStatus       `json:"status"`
+	// Situation carries baseball-only live state (count/bases) and is nil for
+	// leagues whose scoreboard omits it (e.g. WNBA).
+	Situation *espnSituation `json:"situation"`
 }
 
 type espnCompetitor struct {
