@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
-	"strings"
 	"time"
 
 	"github.com/stevebargelt/pixtron/go-scoreboard/internal/render"
@@ -75,24 +74,75 @@ func (l LiveBaseball) Render(width, height int, _ time.Time) *image.RGBA {
 	drawRow(l.Game.Away, topY)
 	drawRow(l.Game.Home, botY)
 
-	render.DrawText(img, baseballStatusLine(l.Game), smallFace, statusColor, width/2, height-1, render.AlignCenter)
+	// Bottom band (y 24..31): inning half-tag (left), base-runner diamond (center),
+	// count + outs (right). Diamond and dots are raw pixels so they don't bloom the
+	// way condensed font glyphs do on the panel.
+	render.DrawText(img, baseballInningTag(l.Game), smallFace, statusColor, 1, height-2, render.AlignLeft)
+	drawBaseDiamond(img, l.Game, 22, 24)
+	render.DrawText(img, fmt.Sprintf("%d-%d", l.Game.Balls, l.Game.Strikes), smallFace, scoreColor, 38, height-2, render.AlignLeft)
+	drawOuts(img, l.Game.Outs, 53, 25)
 
 	return img
 }
 
-// baseballStatusLine prefers ESPN's human-readable inning detail (e.g. "Top 9th",
-// "Bottom 3rd", "Middle 5th") and falls back to the normalized half plus inning
-// number when the detail is empty.
-func baseballStatusLine(g sports.GameSnapshot) string {
-	if d := strings.TrimSpace(g.StatusDetail); d != "" {
-		return d
-	}
-	half := g.InningHalf
-	if half == "" {
-		half = "Inn"
+// baseballInningTag is a compact inning label for the bottom band: a half letter
+// (T/B) plus the inning number, e.g. "T9", "B3". Falls back to just the number
+// when the half is unknown.
+func baseballInningTag(g sports.GameSnapshot) string {
+	half := ""
+	switch g.InningHalf {
+	case "Top":
+		half = "T"
+	case "Bottom":
+		half = "B"
 	}
 	if g.Period > 0 {
-		return fmt.Sprintf("%s %d", half, g.Period)
+		return fmt.Sprintf("%s%d", half, g.Period)
 	}
 	return half
+}
+
+// drawBaseDiamond renders the three bases as 3x3 squares in a diamond at the given
+// top-left origin: 2nd top-center, 3rd lower-left, 1st lower-right. Occupied bases
+// are filled amber; empty bases are a dim outline.
+func drawBaseDiamond(img *image.RGBA, g sports.GameSnapshot, x, y int) {
+	drawBase(img, x+3, y, g.OnSecond) // 2nd: top-center
+	drawBase(img, x, y+3, g.OnThird)  // 3rd: lower-left
+	drawBase(img, x+6, y+3, g.OnFirst) // 1st: lower-right
+}
+
+func drawBase(img *image.RGBA, x, y int, occupied bool) {
+	on := color.RGBA{R: 255, G: 200, B: 0, A: 255}
+	off := color.RGBA{R: 70, G: 70, B: 70, A: 255}
+	const size = 3
+	for dy := 0; dy < size; dy++ {
+		for dx := 0; dx < size; dx++ {
+			edge := dx == 0 || dy == 0 || dx == size-1 || dy == size-1
+			if occupied {
+				img.Set(x+dx, y+dy, on)
+			} else if edge {
+				img.Set(x+dx, y+dy, off)
+			}
+		}
+	}
+}
+
+// drawOuts renders two 3x3 dots; the first `outs` of them are filled red (an out
+// recorded), the rest dim. Outs run 0..2 — a third out ends the half-inning.
+func drawOuts(img *image.RGBA, outs, x, y int) {
+	on := color.RGBA{R: 220, G: 40, B: 40, A: 255}
+	off := color.RGBA{R: 70, G: 70, B: 70, A: 255}
+	const size = 3
+	for i := 0; i < 2; i++ {
+		col := off
+		if i < outs {
+			col = on
+		}
+		ox := x + i*5
+		for dy := 0; dy < size; dy++ {
+			for dx := 0; dx < size; dx++ {
+				img.Set(ox+dx, y+dy, col)
+			}
+		}
+	}
 }

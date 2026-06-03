@@ -6,37 +6,37 @@ import (
 	"github.com/stevebargelt/pixtron/go-scoreboard/internal/sports"
 )
 
-func TestBaseballStatusLine(t *testing.T) {
+func TestBaseballInningTag(t *testing.T) {
 	tests := []struct {
 		name string
 		game sports.GameSnapshot
 		want string
 	}{
 		{
-			name: "prefers ESPN inning detail",
-			game: sports.GameSnapshot{StatusDetail: "Top 9th", InningHalf: "Top", Period: 9},
-			want: "Top 9th",
+			name: "top half",
+			game: sports.GameSnapshot{InningHalf: "Top", Period: 9},
+			want: "T9",
 		},
 		{
-			name: "trims surrounding whitespace",
-			game: sports.GameSnapshot{StatusDetail: "  Bottom 3rd  "},
-			want: "Bottom 3rd",
+			name: "bottom half",
+			game: sports.GameSnapshot{InningHalf: "Bottom", Period: 3},
+			want: "B3",
 		},
 		{
-			name: "falls back to half and inning number",
-			game: sports.GameSnapshot{InningHalf: "Bottom", Period: 7},
-			want: "Bottom 7",
-		},
-		{
-			name: "falls back to placeholder half when unknown",
+			name: "unknown half falls back to number only",
 			game: sports.GameSnapshot{Period: 4},
-			want: "Inn 4",
+			want: "4",
+		},
+		{
+			name: "no inning yet",
+			game: sports.GameSnapshot{InningHalf: "Top", Period: 0},
+			want: "T",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := baseballStatusLine(tt.game); got != tt.want {
-				t.Errorf("baseballStatusLine() = %q, want %q", got, tt.want)
+			if got := baseballInningTag(tt.game); got != tt.want {
+				t.Errorf("baseballInningTag() = %q, want %q", got, tt.want)
 			}
 		})
 	}
