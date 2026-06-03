@@ -25,12 +25,21 @@ solved the Python dependency pain on the Pi (venv, pip, Pillow C headers, rgbmat
 failures). The web admin (`web-admin/`) and Supabase schema are unchanged and shared by both.
 
 ### This project is different from most Forge projects
-- **Do NOT route Go scoreboard work through the Forge pipeline.** Forge containers can't reach
-  the Pi's GPIO hardware, and the dev loop depends on building/running on the Pi. Work on it
-  **directly**: Claude edits the Go source, commits, and drives the Pi over SSH. The "don't edit
-  source / delegate to engineer" rule in the forge-orchestrator block below does **not** apply to
-  `go-scoreboard/`.
-- The user collaborates directly here (tech-lead-style), not as a pure product owner.
+- **Split Go scoreboard work by whether it needs the panel — don't blanket-exempt it from agents.**
+  Most of it touches no hardware: fetchers, API parsing, the snapshot model, scene layout — anything
+  verifiable with `go build` / `go test` / `--sim --once` (reading `out/frame.png`). That work
+  **routes to an engineer like any other code**; the "delegate to engineer" rule in the
+  forge-orchestrator block applies to it normally.
+- **Only the hardware step stays host/Pi-driven**: the `-tags matrix` build (it CGO-links the
+  Pi-resident `librgbmatrix.a` on aarch64) and the on-panel verification run **on the Pi over SSH**,
+  with the user running `sudo`. The reason is concrete — that's the only machine with the build/run
+  target, and only the host has the SSH key + LAN route to reach it. It is **not** about GPIO: the
+  orchestrator has no GPIO access either; the panel does, driven over SSH. (A container *could* drive
+  the Pi too if it were provisioned with the SSH key and a route — this is a provisioning gap, not a
+  law.) The handoff: an engineer writes + sim-verifies the Go change; the host pulls it on the Pi,
+  builds the matrix binary, and the user eyeballs the panel.
+- The user collaborates directly on the hardware-tuning loop (tech-lead-style), not as a pure product
+  owner.
 
 ### Hardware + remote target
 - Pi: hostname `led-scoreboard-3`, SSH alias `led-scoreboard-3` (in `~/.ssh/config`, key auth).
