@@ -121,16 +121,6 @@ Fix: drop the `return` keyword before `res.json()` / `res.status().json()` calls
 Severity: low / cosmetic. Route through Forge (engineer) when convenient; bundle with other API-route touch-ups if any come up.
 
 
-### #31 — MLB logo art — fetch-logos is WNBA-only, MLB renders placeholder boxes
-MLB shipped (PR #24) rendering placeholder boxes for team logos because go-scoreboard's fetch-logos command only supports WNBA. Add MLB to the logo pipeline so the LiveBaseball scene shows real team marks (mini for the stacked rows; banner not needed unless a side_by_side baseball layout is ever added).
-
-- cmd/fetch-logos: add MLB team-id -> logo source mapping (ESPN baseball team assets).
-- Generate mini variants into assets/logos/variants on the Pi (logos are gitignored, live on the Pi only).
-- Note: ESPN MLB team IDs differ from the abbreviations; the fetcher keys on GameSnapshot.Team.ID (ESPN id string).
-
-Low priority — placeholders render fine; this is polish.
-
-
 ### #32 — web-admin per-league layout picker is inert for MLB (always renders LiveBaseball)
 After MLB shipped (PR #24), the web-admin per-league live-view layout picker (device_leagues.display_layout in {stacked, side_by_side}) offers MLB the same choice as WNBA/NHL, but the Go app ignores it for MLB: cmd/scoreboard/main.go currentScene() dispatches any live MLB game to scenes.LiveBaseball before the layout check. So the MLB layout control does nothing.
 
@@ -142,6 +132,18 @@ Low priority / cosmetic — no functional breakage, just a misleading control. C
 
 
 ## Done (recent)
+
+### #31 — MLB logo art — fetch-logos is WNBA-only, MLB renders placeholder boxes
+**Closed:** 2026-06-03.
+
+MLB shipped (PR #24) rendering placeholder boxes for team logos because go-scoreboard's fetch-logos command only supports WNBA. Add MLB to the logo pipeline so the LiveBaseball scene shows real team marks (mini for the stacked rows; banner not needed unless a side_by_side baseball layout is ever added).
+
+- cmd/fetch-logos: add MLB team-id -> logo source mapping (ESPN baseball team assets).
+- Generate mini variants into assets/logos/variants on the Pi (logos are gitignored, live on the Pi only).
+- Note: ESPN MLB team IDs differ from the abbreviations; the fetcher keys on GameSnapshot.Team.ID (ESPN id string).
+
+Low priority — placeholders render fine; this is polish.
+
 
 ### #26 — web-admin: 'Unsaved changes' toast causes the page to jump down
 **Closed:** 2026-06-02. Commit `ca5540c`.

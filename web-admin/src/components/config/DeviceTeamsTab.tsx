@@ -480,20 +480,26 @@ export function DeviceTeamsTab({ deviceId }: { deviceId: string }): ReactElement
                     <span className="text-xs font-medium text-[var(--color-text-muted)]">
                       Layout
                     </span>
-                    {(['stacked', 'side_by_side'] as const).map(layout => (
-                      <button
-                        key={layout}
-                        type="button"
-                        onClick={() => setLayout(config.sport, layout)}
-                        className={`px-3 py-1 text-xs rounded-token-sm border transition-colors ${
-                          config.display_layout === layout
-                            ? `border-[var(--color-accent)] ${styles.badge}`
-                            : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-accent)]'
-                        }`}
-                      >
-                        {layout === 'stacked' ? 'Stacked' : 'Side-by-side'}
-                      </button>
-                    ))}
+                    {config.sport === 'mlb' ? (
+                      <span className="px-3 py-1 text-xs rounded-token-sm border border-[var(--color-border)] text-[var(--color-text-muted)]">
+                        Baseball
+                      </span>
+                    ) : (
+                      (['stacked', 'side_by_side'] as const).map(layout => (
+                        <button
+                          key={layout}
+                          type="button"
+                          onClick={() => setLayout(config.sport, layout)}
+                          className={`px-3 py-1 text-xs rounded-token-sm border transition-colors ${
+                            config.display_layout === layout
+                              ? `border-[var(--color-accent)] ${styles.badge}`
+                              : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-accent)]'
+                          }`}
+                        >
+                          {layout === 'stacked' ? 'Stacked' : 'Side-by-side'}
+                        </button>
+                      ))
+                    )}
                   </div>
                   {config.favorite_teams.length > 0 && (
                     <LeaguePills
