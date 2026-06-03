@@ -47,7 +47,7 @@ func (l Live) Render(width, height int, _ time.Time) *image.RGBA {
 	scoreRightX := width - 1
 
 	drawRow := func(team sports.Team, rowY int) {
-		if logo := render.Logo(l.AssetsDir, team.ID, render.LogoMini); logo != nil {
+		if logo := render.Logo(l.AssetsDir, l.Game.League, team.ID, render.LogoMini); logo != nil {
 			// Scale (don't crop) the variant into the square slot so non-10x10
 			// source art renders whole and aspect-correct.
 			pasteLogo(img, logo, logoX, rowY, logoSize, logoSize)
