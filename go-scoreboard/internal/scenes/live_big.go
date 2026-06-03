@@ -42,8 +42,8 @@ func (lb LiveBig) Render(width, height int, _ time.Time) *image.RGBA {
 	const logoW, logoH = 20, 20
 
 	// Logos: top corners.
-	pasteLogo(img, render.Logo(lb.AssetsDir, lb.Game.Away.ID, render.LogoBanner), 0, 0, logoW, logoH)
-	pasteLogo(img, render.Logo(lb.AssetsDir, lb.Game.Home.ID, render.LogoBanner), width-logoW, 0, logoW, logoH)
+	pasteLogo(img, render.Logo(lb.AssetsDir, lb.Game.League, lb.Game.Away.ID, render.LogoBanner), 0, 0, logoW, logoH)
+	pasteLogo(img, render.Logo(lb.AssetsDir, lb.Game.League, lb.Game.Home.ID, render.LogoBanner), width-logoW, 0, logoW, logoH)
 
 	// Scores: centered under each logo (logo centers are logoW/2 from each edge),
 	// baseline at row 30 so the 10px-tall digits fill rows 21-30. Tracked to 1px

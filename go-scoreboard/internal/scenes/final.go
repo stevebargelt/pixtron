@@ -46,7 +46,7 @@ func (f Final) Render(width, height int, _ time.Time) *image.RGBA {
 	scoreRightX := width - 1
 
 	drawRow := func(team sports.Team, rowY int) {
-		if logo := render.Logo(f.AssetsDir, team.ID, render.LogoMini); logo != nil {
+		if logo := render.Logo(f.AssetsDir, f.Game.League, team.ID, render.LogoMini); logo != nil {
 			draw.Draw(img, image.Rect(logoX, rowY, logoX+logoSize, rowY+logoSize), logo, image.Point{}, draw.Over)
 		}
 		abbr := team.Abbr

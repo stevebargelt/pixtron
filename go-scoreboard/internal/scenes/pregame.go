@@ -40,10 +40,10 @@ func (p Pregame) Render(width, height int, _ time.Time) *image.RGBA {
 	awayLogoX := 2
 	homeLogoX := width - logoSize - 2
 
-	if logo := render.Logo(p.AssetsDir, p.Game.Away.ID, render.LogoMini); logo != nil {
+	if logo := render.Logo(p.AssetsDir, p.Game.League, p.Game.Away.ID, render.LogoMini); logo != nil {
 		draw.Draw(img, image.Rect(awayLogoX, logoY, awayLogoX+logoSize, logoY+logoSize), logo, image.Point{}, draw.Over)
 	}
-	if logo := render.Logo(p.AssetsDir, p.Game.Home.ID, render.LogoMini); logo != nil {
+	if logo := render.Logo(p.AssetsDir, p.Game.League, p.Game.Home.ID, render.LogoMini); logo != nil {
 		draw.Draw(img, image.Rect(homeLogoX, logoY, homeLogoX+logoSize, logoY+logoSize), logo, image.Point{}, draw.Over)
 	}
 

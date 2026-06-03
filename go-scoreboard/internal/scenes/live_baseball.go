@@ -50,7 +50,7 @@ func (l LiveBaseball) Render(width, height int, _ time.Time) *image.RGBA {
 	scoreRightX := width - 1
 
 	drawRow := func(team sports.Team, rowY int) {
-		if logo := render.Logo(l.AssetsDir, team.ID, render.LogoMini); logo != nil {
+		if logo := render.Logo(l.AssetsDir, l.Game.League, team.ID, render.LogoMini); logo != nil {
 			pasteLogo(img, logo, logoX, rowY, logoSize, logoSize)
 		} else {
 			placeholder := color.RGBA{R: 80, G: 80, B: 80, A: 255}
