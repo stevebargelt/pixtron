@@ -1,43 +1,41 @@
 package scenes
 
 import (
+	"image"
+	"image/color"
 	"testing"
-
-	"github.com/stevebargelt/pixtron/go-scoreboard/internal/sports"
 )
 
-func TestBaseballInningTag(t *testing.T) {
-	tests := []struct {
-		name string
-		game sports.GameSnapshot
-		want string
-	}{
-		{
-			name: "top half",
-			game: sports.GameSnapshot{InningHalf: "Top", Period: 9},
-			want: "T9",
-		},
-		{
-			name: "bottom half",
-			game: sports.GameSnapshot{InningHalf: "Bottom", Period: 3},
-			want: "B3",
-		},
-		{
-			name: "unknown half falls back to number only",
-			game: sports.GameSnapshot{Period: 4},
-			want: "4",
-		},
-		{
-			name: "no inning yet",
-			game: sports.GameSnapshot{InningHalf: "Top", Period: 0},
-			want: "T",
-		},
+// drawHalfArrow must point the apex up for the top of an inning and down for the
+// bottom — the orientation is the whole point of the glyph.
+func TestDrawHalfArrow(t *testing.T) {
+	c := color.RGBA{R: 0, G: 220, B: 0, A: 255}
+	isSet := func(img *image.RGBA, x, y int) bool {
+		_, _, _, a := img.At(x, y).RGBA()
+		return a > 0
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := baseballInningTag(tt.game); got != tt.want {
-				t.Errorf("baseballInningTag() = %q, want %q", got, tt.want)
-			}
-		})
+
+	top := image.NewRGBA(image.Rect(0, 0, 8, 8))
+	drawHalfArrow(top, 0, 0, true, c)
+	if !isSet(top, 2, 0) {
+		t.Error("top arrow: apex pixel (2,0) should be set")
+	}
+	if isSet(top, 0, 0) || isSet(top, 4, 0) {
+		t.Error("top arrow: top row corners should be empty (apex up)")
+	}
+	if !isSet(top, 0, 2) || !isSet(top, 4, 2) {
+		t.Error("top arrow: base row should be full")
+	}
+
+	bot := image.NewRGBA(image.Rect(0, 0, 8, 8))
+	drawHalfArrow(bot, 0, 0, false, c)
+	if !isSet(bot, 0, 0) || !isSet(bot, 4, 0) {
+		t.Error("bottom arrow: top row should be full (base up)")
+	}
+	if !isSet(bot, 2, 2) {
+		t.Error("bottom arrow: apex pixel (2,2) should be set")
+	}
+	if isSet(bot, 0, 2) || isSet(bot, 4, 2) {
+		t.Error("bottom arrow: bottom row corners should be empty (apex down)")
 	}
 }

@@ -74,10 +74,18 @@ func (l LiveBaseball) Render(width, height int, _ time.Time) *image.RGBA {
 	drawRow(l.Game.Away, topY)
 	drawRow(l.Game.Home, botY)
 
-	// Bottom band (y 24..31): inning half-tag (left), base-runner diamond (center),
-	// count + outs (right). Diamond and dots are raw pixels so they don't bloom the
-	// way condensed font glyphs do on the panel.
-	render.DrawText(img, baseballInningTag(l.Game), smallFace, statusColor, 1, height-2, render.AlignLeft)
+	// Bottom band (y 24..31): inning arrow + number (left), base-runner diamond
+	// (center), count + outs (right). The arrow, diamond and dots are raw pixels so
+	// they don't bloom the way condensed font glyphs do on the panel.
+	switch l.Game.InningHalf {
+	case "Top":
+		drawHalfArrow(img, 1, 27, true, statusColor)
+	case "Bottom":
+		drawHalfArrow(img, 1, 27, false, statusColor)
+	}
+	if l.Game.Period > 0 {
+		render.DrawText(img, fmt.Sprintf("%d", l.Game.Period), smallFace, statusColor, 8, height-2, render.AlignLeft)
+	}
 	drawBaseDiamond(img, l.Game, 22, 24)
 	render.DrawText(img, fmt.Sprintf("%d-%d", l.Game.Balls, l.Game.Strikes), smallFace, scoreColor, 38, height-2, render.AlignLeft)
 	drawOuts(img, l.Game.Outs, 53, 25)
@@ -85,21 +93,27 @@ func (l LiveBaseball) Render(width, height int, _ time.Time) *image.RGBA {
 	return img
 }
 
-// baseballInningTag is a compact inning label for the bottom band: a half letter
-// (T/B) plus the inning number, e.g. "T9", "B3". Falls back to just the number
-// when the half is unknown.
-func baseballInningTag(g sports.GameSnapshot) string {
-	half := ""
-	switch g.InningHalf {
-	case "Top":
-		half = "T"
-	case "Bottom":
-		half = "B"
+// drawHalfArrow draws a 5x3 triangle at the top-left origin (x,y): apex up marks
+// the top of an inning, apex down the bottom.
+func drawHalfArrow(img *image.RGBA, x, y int, top bool, c color.RGBA) {
+	set := func(px, py int) { img.Set(px, py, c) }
+	if top {
+		set(x+2, y)
+		set(x+1, y+1)
+		set(x+2, y+1)
+		set(x+3, y+1)
+		for dx := 0; dx < 5; dx++ {
+			set(x+dx, y+2)
+		}
+		return
 	}
-	if g.Period > 0 {
-		return fmt.Sprintf("%s%d", half, g.Period)
+	for dx := 0; dx < 5; dx++ {
+		set(x+dx, y)
 	}
-	return half
+	set(x+1, y+1)
+	set(x+2, y+1)
+	set(x+3, y+1)
+	set(x+2, y+2)
 }
 
 // drawBaseDiamond renders the three bases as 3x3 squares in a diamond at the given
