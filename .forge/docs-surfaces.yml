@@ -1,0 +1,22 @@
+surfaces:
+  - web-admin/src/app/
+  - web-admin/src/components/
+  - web-admin/src/lib/
+  - web-admin/e2e/
+  - web-admin/playwright.config.ts
+  - web-admin/package.json
+  - web-admin/supabase/
+  - web-admin/.env.example  
+  - go-scoreboard/
+  - go-scoreboard/cmd/
+  - go-scoreboard/internal/
+  - go-scoreboard/pkg/
+  - go-scoreboard/config/
+  - go-scoreboard/assets/
+  - go-scoreboard/scripts/
+  - go-scoreboard/go.mod
+  - go-scoreboard/go.sum
+  - go-scoreboard/Makefile
+  - go-scoreboard/Dockerfile
+  - go-scoreboard/README.md
+  
