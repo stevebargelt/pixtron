@@ -121,7 +121,11 @@ Fix: drop the `return` keyword before `res.json()` / `res.status().json()` calls
 Severity: low / cosmetic. Route through Forge (engineer) when convenient; bundle with other API-route touch-ups if any come up.
 
 
+## Done (recent)
+
 ### #32 — web-admin per-league layout picker is inert for MLB (always renders LiveBaseball)
+**Closed:** 2026-06-03.
+
 After MLB shipped (PR #24), the web-admin per-league live-view layout picker (device_leagues.display_layout in {stacked, side_by_side}) offers MLB the same choice as WNBA/NHL, but the Go app ignores it for MLB: cmd/scoreboard/main.go currentScene() dispatches any live MLB game to scenes.LiveBaseball before the layout check. So the MLB layout control does nothing.
 
 Options:
@@ -130,8 +134,6 @@ Options:
 
 Low priority / cosmetic — no functional breakage, just a misleading control. Consistent with the broader 'don't expose inert settings as if they work' rule.
 
-
-## Done (recent)
 
 ### #31 — MLB logo art — fetch-logos is WNBA-only, MLB renders placeholder boxes
 **Closed:** 2026-06-03.
