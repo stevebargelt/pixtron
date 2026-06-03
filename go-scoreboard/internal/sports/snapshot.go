@@ -60,4 +60,17 @@ type GameSnapshot struct {
 	// intermission). The clock then reports the intermission countdown, not the
 	// game clock, so callers must not render it as the in-play period time.
 	Intermission bool
+
+	// Baseball-only state, populated by the MLB fetcher and left zero-valued for
+	// other leagues (mirrors how Intermission is NHL-only). InningHalf is the
+	// normalized half — "Top" or "Bottom" — while Period carries the inning
+	// number. Balls/Strikes/Outs are the live count; OnFirst/OnSecond/OnThird mark
+	// occupied bases.
+	InningHalf string
+	Balls      int
+	Strikes    int
+	Outs       int
+	OnFirst    bool
+	OnSecond   bool
+	OnThird    bool
 }

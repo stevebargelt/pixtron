@@ -44,6 +44,7 @@ func main() {
 	assetsDir := flag.String("assets-dir", "../assets", "path to assets directory (for team logos)")
 	demoLeagues := flag.String("demo-leagues", "", "comma-separated leagues to use without Supabase (e.g. \"wnba,nhl\")")
 	demoLiveBig := flag.Bool("demo-live-big", false, "render a synthetic live side_by_side game (dev: preview LiveBig with no live game; no network)")
+	demoBaseball := flag.Bool("demo-baseball", false, "render a synthetic live MLB game (dev: preview the baseball scene with no live game; no network)")
 	demoScores := flag.String("demo-scores", "88,92", "away,home scores for --demo-live-big (e.g. \"101,109\")")
 	flag.Parse()
 
@@ -113,6 +114,9 @@ func main() {
 		away, home := parseDemoScores(*demoScores)
 		state.enableDemoLiveBig(away, home)
 	}
+	if *demoBaseball {
+		state.enableDemoBaseball()
+	}
 	state.reloadConfig()
 	d.SetBrightness(state.currentBrightness())
 	state.refreshGames()
@@ -177,7 +181,7 @@ type appState struct {
 	layouts     map[string]string // league code -> live-view layout
 	games       []sports.GameSnapshot
 	chosen      *sports.GameSnapshot
-	demoLiveBig bool // dev: pin a synthetic live side_by_side game, skip all network
+	demoPinned bool // dev: a synthetic game is pinned (--demo-live-big/--demo-baseball); skip all network
 }
 
 // enableDemoLiveBig pins a fixed live side_by_side game so the LiveBig scene can
@@ -193,9 +197,35 @@ func (s *appState) enableDemoLiveBig(awayScore, homeScore int) {
 		DisplayClock: "5:43",
 	}
 	s.mu.Lock()
-	s.demoLiveBig = true
+	s.demoPinned = true
 	s.leagues = []string{"wnba"}
 	s.layouts = map[string]string{"wnba": layoutSideBySide}
+	s.chosen = &g
+	s.games = []sports.GameSnapshot{g}
+	s.mu.Unlock()
+}
+
+// enableDemoBaseball pins a fixed live MLB game so the baseball scene can be
+// previewed without a real live game. Like enableDemoLiveBig it disables config
+// and game fetching so the synthetic game is never overwritten.
+func (s *appState) enableDemoBaseball() {
+	g := sports.GameSnapshot{
+		League:       "mlb",
+		State:        sports.StateLive,
+		Away:         sports.Team{ID: "8", Abbr: "MIL", Score: 3},
+		Home:         sports.Team{ID: "16", Abbr: "CHC", Score: 5},
+		Period:       7,
+		StatusDetail: "Bottom 7th",
+		InningHalf:   "Bottom",
+		Balls:        2,
+		Strikes:      1,
+		Outs:         2,
+		OnFirst:      true,
+		OnThird:      true,
+	}
+	s.mu.Lock()
+	s.demoPinned = true
+	s.leagues = []string{"mlb"}
 	s.chosen = &g
 	s.games = []sports.GameSnapshot{g}
 	s.mu.Unlock()
@@ -244,7 +274,7 @@ func newAppState(assetsDir, demoLeagues string) *appState {
 // set of enabled leagues changed, so the caller can refetch games without
 // re-hitting the sports APIs on every reload.
 func (s *appState) reloadConfig() bool {
-	if s.demoLiveBig {
+	if s.demoPinned {
 		return false
 	}
 	if s.demoLeagues != nil {
@@ -307,7 +337,7 @@ func sameLeagues(a, b []string) bool {
 }
 
 func (s *appState) refreshGames() {
-	if s.demoLiveBig {
+	if s.demoPinned {
 		return
 	}
 	s.mu.RLock()
@@ -353,6 +383,9 @@ func (s *appState) currentScene() scenes.Scene {
 	case sports.StatePre:
 		return scenes.Pregame{Game: *chosen, AssetsDir: assetsDir, Loc: loc}
 	case sports.StateLive:
+		if chosen.League == "mlb" {
+			return scenes.LiveBaseball{Game: *chosen, AssetsDir: assetsDir}
+		}
 		if layout == layoutSideBySide {
 			return scenes.LiveBig{Game: *chosen, AssetsDir: assetsDir}
 		}
