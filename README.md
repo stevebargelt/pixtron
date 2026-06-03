@@ -24,7 +24,7 @@ This is a multi-tenant product: users sign up, register their own scoreboard dev
 
 - **Go device** (`go-scoreboard/`): single static Go binary running on a Raspberry Pi with an Adafruit RGB Matrix HAT. Polls Supabase for config, ESPN/NHL for live games, renders to a 64×32 chained-2 LED panel.
 - **Web admin** (`web-admin/`): Next.js 14 + TypeScript + Tailwind. Users sign up via Supabase Auth, register devices they own, configure leagues and favorite teams per device.
-- **Supabase**: Postgres with RLS policies enforcing per-user device ownership. Three migration files set up the entire schema.
+- **Supabase**: Postgres with RLS policies enforcing per-user device ownership. Ten migration files set up the entire schema, applied via the Supabase CLI.
 
 No WebSockets, no edge functions, no realtime subscriptions. The device polls. Simple by design.
 
@@ -34,7 +34,7 @@ No WebSockets, no edge functions, no realtime subscriptions. The device polls. S
 |------|-----------|
 | `go-scoreboard/` | The Go scoreboard binary that runs on the Pi. See **CLAUDE.md** for the dev process and hardware setup. |
 | `web-admin/` | Next.js admin interface. See `web-admin/README.md` for setup. |
-| `supabase/migrations/` | Database schema (3 migration files). Run in order in the Supabase SQL editor. |
+| `supabase/migrations/` | Database schema (10 migration files). Apply with `supabase db push` (Supabase CLI). |
 | `assets/` | Team logos and pixel fonts (logos are gitignored; fetched on the Pi). |
 | `scripts/` | Hardware setup helpers (mostly shell). |
 | `CLAUDE.md` | Detailed dev process: Go scoreboard, Pi hardware, dev loop, gotchas. **Read this first if you're working on the device.** |
@@ -44,10 +44,11 @@ No WebSockets, no edge functions, no realtime subscriptions. The device polls. S
 ### 1. Supabase setup
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In the SQL editor, run each migration in order:
-   - `supabase/migrations/001_complete_schema.sql`
-   - `supabase/migrations/002_rls_policies.sql`
-   - `supabase/migrations/003_seed_data.sql`
+2. Install the [Supabase CLI](https://supabase.com/docs/guides/cli), link your project, and push all migrations:
+   ```bash
+   supabase link --project-ref YOUR_PROJECT_REF
+   supabase db push
+   ```
 3. Note your project URL, anon key, and service-role key.
 
 Detailed steps in `docs/SUPABASE_SETUP.md`.
@@ -97,8 +98,8 @@ For simulator development (no hardware), build without `-tags matrix` and run `.
 |--------|--------|--------|-----|
 | WNBA | Live | May–Oct | ESPN |
 | NHL  | Live | Oct–Jun | NHL  |
+| MLB  | Live | Mar–Nov | ESPN |
 | NBA  | Ready | Oct–Jun | ESPN |
-| MLB  | Ready | Mar–Nov | ESPN |
 | NFL  | Ready | Sep–Feb | ESPN |
 
 ## Status

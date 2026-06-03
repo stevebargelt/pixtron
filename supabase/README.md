@@ -6,11 +6,7 @@ This directory contains SQL migrations for the LED Scoreboard's direct Supabase 
 
 ## Migration Structure
 
-We use **3 clean migrations** that build everything from scratch:
-
-1. **`001_complete_schema.sql`** - All tables, indexes, functions, and triggers
-2. **`002_rls_policies.sql`** - Complete Row Level Security setup
-3. **`003_seed_data.sql`** - Sports and leagues data
+There are **10 migrations** in `migrations/` (001–010). See `migrations/README.md` for the full list.
 
 ## Quick Start
 
@@ -21,13 +17,11 @@ We use **3 clean migrations** that build everything from scratch:
 
 ### 2. Run Migrations
 
-In Supabase Dashboard → SQL Editor:
+Use the Supabase CLI:
 
-```sql
--- Run each file in order:
--- 1. Copy contents of 001_complete_schema.sql and execute
--- 2. Copy contents of 002_rls_policies.sql and execute
--- 3. Copy contents of 003_seed_data.sql and execute
+```bash
+supabase link --project-ref <your-project-ref>
+supabase db push
 ```
 
 ### 3. Create Your Device
@@ -99,17 +93,12 @@ JOIN sports s ON l.sport_id = s.id;
 
 ## Development Tips
 
-### Using Supabase CLI (Optional)
+### Using Supabase CLI
 
 ```bash
-# Install CLI
-npm install -g supabase
-
-# Login and link project
+# Install CLI, then:
 supabase login
 supabase link --project-ref <your-project-ref>
-
-# Apply migrations
 supabase db push
 ```
 
@@ -122,7 +111,7 @@ CREATE SCHEMA public;
 GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO public;
 
--- Then run the 3 migrations again
+-- Then run supabase db push to re-apply all migrations
 ```
 
 ## Notes

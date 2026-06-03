@@ -68,8 +68,8 @@ go build -o scoreboard ./cmd/scoreboard
 go build -tags matrix -o scoreboard-matrix ./cmd/scoreboard
 sudo ./scoreboard-matrix             # GPIO needs root
 
-# Useful flags: --fetch-wnba --fetch-nhl --fetch-config --demo-leagues=wnba,nhl
-#               --env <path> --assets-dir <path> --tick-ms N --once
+# Useful flags: --fetch-wnba --fetch-nhl --fetch-config --demo-leagues=wnba,nhl,mlb
+#               --demo-baseball --env <path> --assets-dir <path> --tick-ms N --once
 ```
 
 ### The dev loop (exact process)
@@ -88,7 +88,9 @@ sudo ./scoreboard-matrix             # GPIO needs root
   stays clean and that workaround is unnecessary.)
 - **Logos are gitignored** (root `.gitignore` swallows all `assets/`) and live only on the Pi.
   They are white silhouettes by default; regenerate color variants with
-  `go run ./cmd/fetch-logos --assets-dir ../assets` (WNBA only so far). Fonts, by contrast, are
+  `go run ./cmd/fetch-logos --assets-dir ../assets` (WNBA), or add `--league nhl` / `--league mlb`
+  for the other leagues. Variants are namespaced by league on disk:
+  `assets/logos/variants/<league>/<id>_<variant>.png`. Fonts, by contrast, are
   committed and `//go:embed`ed from `internal/render/assets/` (a local `.gitignore` override
   re-includes them).
 - **ESPN start times omit seconds** (e.g. `2026-05-29T00:00Z`), which `time.RFC3339` rejects.
@@ -119,12 +121,13 @@ npm run type-check       # tsc --noEmit
 
 ## Database
 
-Supabase (Postgres + RLS). All migrations live in `supabase/migrations/`:
-1. `001_complete_schema.sql` — tables, indexes, functions, triggers
-2. `002_rls_policies.sql` — RLS
-3. `003_seed_data.sql` — sports + leagues seed
+Supabase (Postgres + RLS). All migrations live in `supabase/migrations/` (001–010). Apply via the Supabase CLI (project already linked):
 
-Run in order in the Supabase SQL Editor. Key tables: `devices`, `device_config`, `device_leagues`, `device_favorite_teams`, `sports`, `leagues`.
+```bash
+supabase db push
+```
+
+Key tables: `devices`, `device_config`, `device_leagues`, `device_favorite_teams`, `sports`, `leagues`.
 
 ## Environment Variables
 
@@ -183,7 +186,7 @@ MATRIX_PIXEL_MAPPER_CONFIG=Rotate:180  # Python only — Go hardcoded
 - Follow existing code patterns and conventions
 - Test in simulation mode before hardware (`--sim --once` on Go)
 - Check environment variables are set
-- Use the 3-migration setup for database
+- Apply database migrations with `supabase db push`
 
 ### DON'T:
 - Add WebSocket/realtime subscriptions
