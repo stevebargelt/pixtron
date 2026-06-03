@@ -6,7 +6,7 @@ Step-by-step guide to setting up a new Supabase project for the LED Scoreboard. 
 
 - Supabase account with project created
 - Project credentials (URL, anon key, service role key) from Settings → API
-- Access to the Supabase SQL Editor
+- [Supabase CLI](https://supabase.com/docs/guides/cli) installed and authenticated (`supabase login`)
 
 ## Step 1: Configure environment
 
@@ -23,15 +23,14 @@ Where they go:
 
 ## Step 2: Run migrations
 
-Supabase doesn't allow arbitrary SQL execution via its REST API, so migrations run via the dashboard SQL Editor.
+Use the Supabase CLI to apply all migrations at once:
 
-1. Open SQL Editor: `https://supabase.com/dashboard/project/YOUR_PROJECT_REF/sql`
-2. Run each migration **in order**:
-   - `supabase/migrations/001_complete_schema.sql`
-   - `supabase/migrations/002_rls_policies.sql`
-   - `supabase/migrations/003_seed_data.sql`
+```bash
+supabase link --project-ref YOUR_PROJECT_REF
+supabase db push
+```
 
-For each: open the file, copy its full contents into the SQL Editor, run.
+This applies all 10 migrations in order (001–010). Requires the database password shown at project creation.
 
 ### Verify
 
@@ -64,19 +63,8 @@ RETURNING id;
 -- The returned UUID becomes DEVICE_ID in the device's .env
 ```
 
-## Alternative: Supabase CLI
-
-If you've installed and configured `supabase` CLI:
-
-```bash
-supabase link --project-ref YOUR_PROJECT_REF
-supabase db push
-```
-
-Requires the database password (shown once at project creation).
-
 ## Troubleshooting
 
 - **Connection errors:** verify URL + keys; check the project isn't paused (free-tier projects pause after 7 days inactive); confirm RLS allows access for the calling user
-- **Missing tables:** migrations must run in order; check SQL Editor output for errors
+- **Missing tables:** migrations must run in order; check `supabase db push` output for errors
 - **Device-not-found in the device app:** confirm `DEVICE_ID` matches a row in `devices`, the device has `user_id` set, and the user owns it (RLS check)
