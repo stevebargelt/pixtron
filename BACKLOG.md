@@ -57,8 +57,6 @@ The `fetch_nhl_assets.py` script requires `cairosvg` which needs the `libcairo2-
 - `scripts/install_rgbmatrix.sh` — builds the **Python** rgbmatrix bindings; the Go app only needs the C lib `librgbmatrix.a`. Reduce to building the C lib; drop the Python-binding + import-verify steps.
 - `scripts/hardware_self_test.sh` — python3-based matrix test; convert to a Go `--sim`/hardware check or drop.
 
-### #8 — Live snapshot from device — replaces removed Canvas preview
-
 ### #11 — Forge: feature build phase should dispatch per-discipline specialists, not one generic engineer
 Observed 2026-05-28 on the web-admin redesign (run-web-admin-redesign-honest-2-tab-device-config-8ecb5c). The tech-lead plan tagged each step discipline (steps 1-4 backend, 5-6 frontend), but the feature-ui-design-provided build phase dispatched ONE generic engineer for the whole wave; the discipline tags were unused for routing. CLAUDE.md describes the intent as "engineer (specialist per step)" — mismatch. Result: the generalist twice dropped frontend craft (a11y semantics, invalid disabled-on-datalist-option duplicate-favorites bug, skipped/ignored browser-tools visual verification). Ask: make the build phase fan out per the plan discipline tags (frontend-specialist for frontend steps, backend-specialist for backend), or document that build is intentionally single-engineer. This is a Forge tooling issue, not a scoreboard-app issue.
 
@@ -122,6 +120,10 @@ Severity: low / cosmetic. Route through Forge (engineer) when convenient; bundle
 
 
 ## Done (recent)
+
+### #8 — Live snapshot from device — replaces removed Canvas preview
+**Closed:** 2026-06-04.
+
 
 ### #32 — web-admin per-league layout picker is inert for MLB (always renders LiveBaseball)
 **Closed:** 2026-06-03.
