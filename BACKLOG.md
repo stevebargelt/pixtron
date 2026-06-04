@@ -319,6 +319,8 @@ FIX:
 
 RELATED: this overlaps #16 — for is_active to mean "available", the seed/admin must set is_active=true only for leagues the Go app can actually fetch (today: wnba, nhl). MLB/NBA/etc should stay is_active=false until #16 (data-driven leagues) lands. Also note: the Teams tab currently only shows leagues the device already has device_leagues rows for — it has no path to add a NOT-yet-configured active league; consider showing all is_active leagues merged with device state (separate UX gap).
 
+> SUPERSEDED 2026-06-03: MLB shipped live (PR #24/#25) via a per-league Go fetcher (`internal/sports/mlb.go`), not the #16 data-driven path — so "MLB stays is_active=false until #16" no longer holds. Fetchable leagues today: wnba, nhl, mlb (is_active=true for all three; migrations 009/010). The separate "Teams tab can't add an un-configured active league" UX gap is still open.
+
 
 ### #7 — Polling: back off API calls when no game is imminent (time-to-start-aware cadence)
 **Closed:** 2026-05-29. Commit `c82765d`.
