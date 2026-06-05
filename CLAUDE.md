@@ -290,20 +290,45 @@ Only read BACKLOG.md whole if you genuinely need cross-ticket scanning. `forge b
 
 ### Step 1 — Classify the prompt
 
-Read `@~/.forge/forge-raci.md` if you haven't already this session. Then classify the prompt into ONE work type:
+Classify the prompt into ONE work type (the routing itself comes from the compiled policy in Step 2, not from memory):
 
 `strategy` · `planning` · `ticketing` · `implementation` · `testing` · `documentation` · `research` · `review` · `architecture` · `ui-design` · `orientation` · `meta`
 
 If the prompt spans multiple work types, **split and sequence** — decompose into discrete work items, route each in order. If classification is ambiguous after one read, ask ONE targeted question before proceeding.
 
-### Step 2 — Look up the RACI
+### Step 2 — Resolve the route from the compiled policy
 
-From `~/.forge/forge-raci.md`, identify:
-- **Responsible** — the agent that does the work (or you, for in-session work types)
-- **Accountable** — who owns the outcome (you, by default; user for `ui-design`)
-- **Consulted** — agents whose input you gather BEFORE the Responsible agent runs
-- **Informed** — downstream parties to notify after work completes (forge: usually file updates, not agent notifications)
-- **Path** — `in-session` / `invoke` / `pipeline`
+The RACI (`~/.forge/forge-raci.md`) is the human-readable SOURCE; the **compiled routing policy** (`~/.forge/routing-policy.yml`) is what you operationally route from. A project can specialize routing without touching the host default: if `<project>/.forge/routing-policy.yml` exists it **fully replaces** the host policy for that project (its RACI source is `<project>/.forge/forge-raci.md`). `route explain` / `route validate` / `route compile` resolve this automatically — they default to the cwd project and report `source: host | project`, so just run them from the project dir. A project override may add or specialize routes but cannot weaken a force rule the host mandates (the validator refuses it). Map the classified work type to a concrete **route key** and look it up — don't route from memory:
+
+```bash
+forge route explain <route-key> --json
+```
+
+Work-type → route-key:
+- `implementation` → `implementation_full` (pipeline-worthy) or `implementation_quick` (small change)
+- `testing` → `testing_automation` or `testing_exploratory`
+- `documentation` → `documentation_durable` or `documentation_ephemeral`
+- `review` → one or more of `review_wide` / `review_narrow` / `review_frontend` / `review_backend` / `review_security`
+- everything else maps 1:1 (`strategy`, `planning`, `ticketing`, `research`, `architecture`, `ui-design`→`ui_design`, `orientation`, `meta`)
+
+`route explain --json` returns the full executable route — **route per that result**:
+- **`path`** — how to dispatch: `in_session` / `invoke` / `invoke_chain` / `workflow` / `manual` / `cli`.
+- **`responsible`** — who/what does the work (agent role, workflow name, CLI action, or `orchestrator`/`human`). **Accountable is always the human** — it's a policy-header invariant, not per-route.
+- **`required_followups`** — mandatory after the responsible work (e.g. `implementation_quick` → `test-engineer`).
+- **`consulted`** — run BEFORE the responsible work; **`informed`** — post-work closure targets, with `when=` conditions.
+
+The policy is DERIVED (RACI → policy, never the inverse). You never hand-edit the RACI and recompile silently — changing routing means changing the rules you operate by, so it goes through the gated authoring channel below. `forge route validate` lints the live policy against this host. To inspect what's actually in force without routing a single prompt, `forge route governance [--project <dir>] [--json]` prints every route's executable fields and, for a project override, the host-vs-project diff — read-only, useful when you (or the user) want to see the effective policy before changing it. For the non-mechanical calls the route fields can't express (specialist selection, full-vs-quick, the ui-design manual handoff), read the `Routing guidance:` prose in the RACI.
+
+### Changing the routing — orchestrator-mediated authoring (the primary edit channel)
+
+When the user asks to change routing in conversation ("route bug fixes through the backend specialist", "always run test-engineer on quick fixes", "ping me when behavior changes"), you translate that to a concrete RACI edit and drive it through a **gated, confirm-before-write loop**. You never write the RACI from a casual remark — the validator is what makes this safe rather than drift.
+
+1. Author a **candidate** RACI file (a copy of `~/.forge/forge-raci.md` with your edit) to a scratch path — this is ephemeral working-state, so you write it directly.
+2. **Propose** — `forge raci propose <candidate.md> [--json]`. This runs the full gate (raci validate → compile → route validate) and renders the diff + route-change summary. It **never writes**. A failing gate (unknown agent, non-`human` accountable, weakened force rule, bad grammar) produces no writable artifact — fix the candidate and re-propose.
+3. **Show the user the rendered diff + route-change summary and your read of it.** Changing governance is a confirm-before-acting action — wait for explicit confirmation. Never self-apply.
+4. **Apply** — on confirmation, `forge raci apply <candidate.md> --confirm`. It **re-runs the gate immediately before writing** (never trusts the earlier propose), then installs the candidate, recompiles `routing-policy.yml`, and appends a JSONL line to `~/.forge/raci-audit.log` so every routing change is auditable after the fact. Without `--confirm`, `apply` behaves like `propose` (dry run).
+
+The expert escape hatch (hand-edit the RACI file + `forge raci validate`, or a forced standalone-policy edit) remains available, but the conversation-driven loop above is the front door.
 
 ### Step 3 — Present the plan
 
@@ -358,7 +383,7 @@ forge new feature "<title>" --brief "<brief>" --project "$(pwd)"
 
 (Adjust flags for the workflow variant: `feature-ui-design-needed` adds `--design-dir`; `feature-ui-design-provided` uses `--prd`.)
 
-The pipeline runs architect → tech-lead → engineer (specialist per step) → test-engineer with reds. You watch it via `forge watch <run-id>`.
+The pipeline runs architect → tech-lead → engineer (specialist per step) → test-engineer with reds → documentation-maintainer docs phase. You watch it via `forge watch <run-id>`.
 
 **For `testing` — standalone invoke:**
 
@@ -380,9 +405,20 @@ forge invoke documentation-maintainer \
 
 The maintainer establishes ground truth from the changed code, finds the affected docs by content (not a static map), and edits them to match — returning `{ docs_updated, docs_not_updated_reason, stale_docs_found, operator_behavior_changed }`. Verify that contract like any other: `operator_behavior_changed: true` with nothing updated and no deferral reason is a reject.
 
-**Docs-impact routing — when behavior changes, route a docs-impact task.** After any change that alters operator-visible behavior (a renamed flag, a new command, a changed default, a new event), the durable docs are now potentially wrong. Don't fix them inline — chain a `documentation-maintainer` invoke onto the same run. Carry a **"Docs impact: none | updated | deferred"** line in your review/PR summary so the decision is explicit and auditable:
+**Docs-impact routing — when operator-visible behavior changes, docs must be reconciled.** The path depends on how the change was made:
+
+- **PIPELINE runs (`forge new feature ...`):** the docs phase runs automatically as the final pipeline step (`gate: auto`). Do NOT manually chain a `documentation-maintainer` invoke — that double-handles it. Instead, review the docs phase result like any other `gate: auto` step: check `docs_updated`, `docs_not_updated_reason`, and `operator_behavior_changed`. Advance or reject on that basis.
+- **QUICK-INVOKE chains (`forge invoke engineer ...`) and ad-hoc behavior changes outside a pipeline:** there is no docs phase. After any change that alters operator-visible behavior (a renamed flag, a new command, a changed default, a new event), chain a `documentation-maintainer` invoke onto the same run:
+
+```bash
+forge invoke documentation-maintainer \
+  --task "<what changed + the user-facing behavior summary>" \
+  --run <same-run-id-as-the-code-change>
+```
+
+Carry a **"Docs impact: none | updated | deferred"** line in your review/PR summary so the decision is explicit and auditable — this convention applies to both paths:
 - **none** — nothing operator-visible changed (refactor, internal-only).
-- **updated** — maintainer ran; `docs_updated` lists what changed.
+- **updated** — maintainer ran (or docs phase completed); `docs_updated` lists what changed.
 - **deferred** — impact exists but a follow-up owns it; cite `docs_not_updated_reason`.
 
 ### Step 5 — Watch and decide (pipeline runs)
@@ -405,6 +441,7 @@ You're the verifier for `gate: auto` steps. Your standard:
 - **Tech-lead plan:** is each step independently testable with clear file boundaries and acceptance criteria? Or is it a wishlist? Concrete → advance. Vague → reject and ask for specificity.
 - **Engineer / specialist output:** does the diff match the plan? Did they touch only the files the plan listed? **Did they validate?** Implementer seeds require `tests_run` in the result, plus `screenshots` if `files_modified` includes visual file types **and the project is a web app** (not mobile/React Native). **Missing validation fields are a hard reject — never advance past an unvalidated diff.** If the engineer returned `status: complete` without `tests_run`, the seed was violated; reject and request rerun. Files outside scope → flag.
 - **Test engineer output:** did they write real integration/E2E tests? Check `test_files_written` — if empty or missing, reject. Check `tests_written` vs `tests_passed` — all tests must pass. For web apps, E2E tests should include browser-tools verification with screenshots. A test-engineer that only re-ran the engineer's unit tests has failed its role — reject.
+- **Documentation maintainer output (docs phase, `gate: auto`):** did the maintainer actually reconcile docs against what changed? Check `docs_updated` — if empty, `docs_not_updated_reason` must explain why. `operator_behavior_changed: true` with empty `docs_updated` and no `docs_not_updated_reason` is a contradiction — reject.
 - **Manual QA output** (invoke-only, not every run): did they test real user scenarios? Check `scenarios_tested` — a verdict based on one scenario is weak. Check `findings` — each finding should have reproduction steps and a screenshot. A pass with no evidence is a rubber stamp — send back.
 - **Red verdict (verdict gate):** read the findings. Real catch → present to user. Procedural noise → advance over with rationale; tell the user briefly.
 
