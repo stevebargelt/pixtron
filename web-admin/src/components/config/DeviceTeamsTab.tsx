@@ -46,7 +46,7 @@ function getLeagueStyles(sport: string): {
   removeBtn: string
 } {
   const code = sport.toLowerCase()
-  if (code === 'wnba') {
+  if (code === 'wnba' || code === 'nba') {
     return {
       badge: 'bg-[var(--color-league-wnba)] text-[var(--color-league-wnba-fg)]',
       pill: 'bg-[var(--color-league-wnba-soft)]',

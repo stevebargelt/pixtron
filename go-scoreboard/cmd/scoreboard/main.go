@@ -38,11 +38,12 @@ func main() {
 	once := flag.Bool("once", false, "render a single frame and exit")
 	tickMs := flag.Int("tick-ms", 1000, "render interval in milliseconds")
 	fetchWNBA := flag.Bool("fetch-wnba", false, "fetch today's WNBA games and print, then exit")
+	fetchNBA := flag.Bool("fetch-nba", false, "fetch today's NBA games and print, then exit")
 	fetchNHL := flag.Bool("fetch-nhl", false, "fetch today's NHL games and print, then exit")
 	fetchConfig := flag.Bool("fetch-config", false, "fetch device config from Supabase and print, then exit")
 	envFile := flag.String("env", "../.env", "path to .env file (existing vars take precedence)")
 	assetsDir := flag.String("assets-dir", "../assets", "path to assets directory (for team logos)")
-	demoLeagues := flag.String("demo-leagues", "", "comma-separated leagues to use without Supabase (e.g. \"wnba,nhl\")")
+	demoLeagues := flag.String("demo-leagues", "", "comma-separated leagues to use without Supabase (e.g. \"wnba,nba,nhl,mlb\")")
 	demoLiveBig := flag.Bool("demo-live-big", false, "render a synthetic live side_by_side game (dev: preview LiveBig with no live game; no network)")
 	demoBaseball := flag.Bool("demo-baseball", false, "render a synthetic live MLB game (dev: preview the baseball scene with no live game; no network)")
 	demoScores := flag.String("demo-scores", "88,92", "away,home scores for --demo-live-big (e.g. \"101,109\")")
@@ -72,6 +73,18 @@ func main() {
 			os.Exit(1)
 		}
 		printGames("WNBA", games)
+		return
+	}
+
+	if *fetchNBA {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		games, err := sports.FetchNBA(ctx, time.Now())
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "fetch: %v\n", err)
+			os.Exit(1)
+		}
+		printGames("NBA", games)
 		return
 	}
 

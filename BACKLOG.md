@@ -18,35 +18,30 @@ The `fetch_nhl_assets.py` script requires `cairosvg` which needs the `libcairo2-
 ### BL-005: WNBA teams parser reads venue but ESPN doesn't include it — CLOSED 2026-05-27
 
 ## Notes for next session
-**Last session ended 2026-06-02 — #27 Next.js 15 upgrade shipped; backlog reconciled (PR #20 retired).**
+**Last session ended 2026-06-05.**
 
-**Where we left off:** Shipped #27 — upgraded web-admin from next@14.2.35 to next@15.5.19 (React runtime stays 18) and restored the three CI audit gates from CRITICAL-only back to `high`. Merged as PR #21 (squash cb40598); CI fully green including the restored high gates running for real (proves the highs are genuinely cleared, not just threshold-loosened). Forge chain: engineer -> test-engineer (193/193, +4 E2E) -> red-security (no regressions). A mid-way `npm ci` peer-dep failure (CI strict install rejected @types/react-dom@18 vs @types/react@19) was fixed by aligning both @types/react* to ^19. Also reconciled the backlog: closed #24/#25/#26/#27, and PR #20 (a prior session's never-merged backlog handoff) was superseded and closed unmerged — its only unique content (the #24/#26 closes) was folded in here.
+**Where we left off:** Scoped adding the **NBA** as a fully-supported league (Steve's request, off the MLB success). Confirmed Steve's hypothesis: NBA and WNBA are both ESPN `basketball` — same `site.api.espn.com/.../basketball/<league>/scoreboard` shape, `nba` vs `wnba`. NBA is the EASY league: it reuses the generic basketball scene, so NO new scene, NO `GameSnapshot` model changes, NO web-admin code (data-driven from `leagues` table), and the per-league layout toggle works as-is (unlike MLB). Full plan written to repo-root `NBA-PLAN.md` (~10 files). Awaiting Steve's go-ahead to kick off the engineer chain — nothing built yet, no commits this session.
 
-**Picked up next (pick one — Steve owns the call):**
-1. **#29** web-admin: GET /api/sports allows unauthenticated team enumeration (low, pre-existing; decide document-as-public vs wrap withAuth). Surfaced by red-security during #27.
-2. **#30** web-admin: Next 15 logs a warning on `return res.json()` in Pages Router API handlers (low/cosmetic; drop the `return` before res.json() across src/pages/api/**). Surfaced by test-engineer during #27.
-3. **#20** E2E dashboard empty-state via a dedicated no-device QA user · **#21** lock catalog tables read-only via RLS · **#15** dev/QA auth bypass (recheck relevance post admin-removal).
-4. **#8** live snapshot from device · **#5** Pi deploy automation via Tailscale · **#11/#12** forge meta.
-
-**Uncommitted working state to resolve:** CLAUDE.md is modified (forge-upgrade orchestrator-template re-render adding the documentation-maintainer role) and .forge/docs-surfaces.yml is untracked (forge config). Both are forge-upgrade artifacts, unrelated to #27 — offered to commit as a small chore; not yet done.
+**Picked up next:**
+1. **NBA addition (non-ticket thread — not yet a backlog #):** if Steve says go, route Phase 1 to the engineer chain per `NBA-PLAN.md`: `internal/sports/nba.go` (mirror `wnba.go`), register `"nba"` in `aggregator.go`, `--fetch-nba` flag in `cmd/scoreboard/main.go`, `runNBA()` in `cmd/fetch-logos`, migrations `011_enable_nba.sql` + `012_seed_nba_teams.sql`, `nba_test.go`. Engineer self-verifies (`go build`/`go test`/`--fetch-nba`/`--sim --once`) → test-engineer same run. Then Phase 2 host/Pi: `supabase db push`, regen NBA logos on Pi, `-tags matrix` build, Steve eyeballs panel. TWO open questions for Steve before starting: (a) combined PR vs. logos-split-out like MLB; (b) confirm deferring NBA-specific web-admin badge styling (plan defaults to deferring — NBA falls back to neutral accent colors). This is the FIRST real exercise of the Go-work routing rule (PR #27) — watch that the handoff shape holds.
+2. **#29** web-admin: GET /api/sports allows unauthenticated team enumeration (low, pre-existing; decide document-as-public vs wrap withAuth).
+3. **#30** web-admin: Next 15 warns on `return res.json()` in Pages Router API handlers (low/cosmetic; drop `return` before res.json() across src/pages/api/**).
+4. **#5** Pi deploy automation (Tailscale + Actions) — YAML/scripting half is agent-doable; only Tailscale/Pi wiring is host-side.
 
 **External state to remember:**
-- Pi: SSH alias `led-scoreboard-3`, IP `192.168.68.72` (DHCP, mDNS flaky — re-check on SSH fail). go-scoreboard dev loop is on the Pi (Forge can't reach GPIO). Steve runs `sudo` himself.
-- 4 GitHub repo SECRETS wired & working: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, CLAUDE_CODE_OAUTH_TOKEN, CODECOV_TOKEN.
-- Migrations through 008 applied to remote Supabase via `supabase db push`.
-- CI runs strict `npm ci` — validate forge-authored web-admin dep changes with `npm ci` (not lenient `npm install`) before pushing, or the lockfile can pass locally and fail CI.
-- Brand assets live in repo-root `brand/` (NOT `assets/`, which root .gitignore swallows). web-admin uses `public/brand/` + favicon tags in `_document.tsx` (Pages Router).
-- WNBA logos exist locally on the Mac at `assets/logos/` (500px) + `assets/logos/variants/`. TOR (Toronto Tempo, id 131935) banner is on the Pi but NOT local — blank in Mac sim only.
+- **Uncommitted working tree:** `BACKLOG.md` modified (last session's handoff-notes block, never committed — legit content) + `NBA-PLAN.md` untracked (this session's plan doc). Both should land in a tidy chore commit; `NBA-PLAN.md` is ephemeral scratch/plan, not durable docs. Neither committed — ask Steve before pushing.
+- Pi: SSH alias `led-scoreboard-3` (key auth, aarch64). DHCP IP drifts + mDNS flaky — re-check on SSH fail. Steve runs `sudo` for the hardware run himself.
+- **Go-work routing rule (PR #27, on main):** sim/test-verifiable go-scoreboard work → engineer; only `-tags matrix` build + on-panel check stay host/Pi. NOT a GPIO limitation — a provisioning gap (container lacks Pi SSH key + LAN route).
+- **Supabase migrations through 010**; NBA will be 011/012. Applied to remote via `supabase db push` (project linked). NBA row already seeded INACTIVE in `003_seed_data.sql` — 011 just flips `is_active=true` + sets 2025-26 season window (mid-Finals as of 2026-06-05, so set it active-now for live panel verification).
+- **Logos namespaced by league:** `assets/logos/variants/<league>/<id>_<variant>.png`; fetch-logos supports `--league wnba|nhl|mlb`, NBA adds `nba`. NBA/WNBA/MLB pull from ESPN; NHL reuses `assets/nhl_logos/`. Pi regenerates; Mac has wnba+mlb only.
+- CI runs strict `npm ci`; **codecov/patch gates coverage** — new uncovered branches fail the PR (hence `nba_test.go` in the plan). Forge container skips tsc + prettier — run locally before pushing forge-authored web-admin code.
 
 **Decisions worth not relitigating:**
-- **next stays on a patched 15.x, React runtime stays 18.** @types/react* are at ^19 (types ahead of runtime — intentional, type-check passes); do NOT bump react/react-dom runtime to 19 without a separate decision.
-- **Security gates are back to `high`** (ci.yml npm audit + audit-ci, code-quality.yml dependency-review). 2 moderate postcss advisories remain (bundled inside next; unfixable without a next release) — acceptable, below the gate.
-- **LiveBig score = 04B_24@16**, layout is per-corner; hardware-verified on a live game. See memory reference_pixel_font_native_sizes.
-- **Admin screen REMOVED, not gated** (#10); catalog edits are operator/out-of-band, no JWT role system.
-- **Live-view layout is PER-LEAGUE** (device_leagues.display_layout in {stacked, side_by_side}); value strings are a hard contract across Go + DB + web UI.
-- **Forge container skips tsc + prettier** (jest transpiles only) -> run real type-check + prettier locally before pushing forge-authored web-admin code. Memory: reference_forge_edits_persist_in_worktree.
+- **NBA reuses the generic basketball scene** — no dedicated scene (MLB needed `LiveBaseball` only because baseball has innings/count/bases; basketball is just score+clock like WNBA). No `GameSnapshot` changes, no MLB-style inert-layout-toggle hack.
+- **NBA data source = ESPN basketball scoreboard**, same precedent as MLB (ESPN over a league-specific StatsAPI).
+- **NBA web-admin = zero code changes** — the leagues directory is data-driven; the NBA row exists in the DB, the API and `DeviceTeamsTab` iterate over whatever the DB returns. Badge styling falls back to neutral accents; bespoke NBA colors deferred to a follow-up.
 
-**Shipped recently (git log is canonical):** PR#21 -> #27 Next.js 15.5.19 upgrade + audit gates to high + 4 E2E tests · PR#16 -> #24 device rename · PR#17 -> #26 toast float (carried #25 Save label) · PR#15 LiveBig redesign (hardware-verified). Closed: #24, #25, #26, #27. PR #20 closed unmerged (superseded).
+**Shipped (for reference):** Nothing committed this session — orientation + NBA scoping + `NBA-PLAN.md` only. (Prior session, git-canonical: MLB end-to-end across GH PRs #24–#29, #8 closed/deferred.)
 
 ## Active
 

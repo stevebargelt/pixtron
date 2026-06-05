@@ -12,6 +12,7 @@ type LeagueFetcher func(ctx context.Context, day time.Time) ([]GameSnapshot, err
 
 var registry = map[string]LeagueFetcher{
 	"wnba": FetchWNBA,
+	"nba":  FetchNBA,
 	"nhl":  FetchNHL,
 	"mlb":  FetchMLB,
 }

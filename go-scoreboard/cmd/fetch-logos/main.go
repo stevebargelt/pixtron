@@ -43,19 +43,51 @@ type teamsFile struct {
 
 func main() {
 	assetsDir := flag.String("assets-dir", "../assets", "path to assets directory")
-	league := flag.String("league", "wnba", "league to generate variants for (wnba|nhl|mlb)")
+	league := flag.String("league", "wnba", "league to generate variants for (wnba|nba|nhl|mlb)")
 	flag.Parse()
 
 	switch strings.ToLower(*league) {
 	case "wnba":
 		runWNBA(*assetsDir)
+	case "nba":
+		runNBA(*assetsDir)
 	case "nhl":
 		runNHL(*assetsDir)
 	case "mlb":
 		runMLB(*assetsDir)
 	default:
-		fail("unknown league %q (want wnba, nhl, or mlb)", *league)
+		fail("unknown league %q (want wnba, nba, nhl, or mlb)", *league)
 	}
+}
+
+const nbaTeamsURL = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams"
+
+func runNBA(assetsDir string) {
+	client := &http.Client{Timeout: 20 * time.Second}
+	teams, err := espnTeamsWithLogos(client, nbaTeamsURL)
+	if err != nil {
+		fail("fetch nba teams: %v", err)
+	}
+
+	variantsDir := ensureVariantsDir(assetsDir, "nba")
+	ok, skipped := 0, 0
+	for _, t := range teams {
+		if t.logoURL == "" {
+			fmt.Printf("  %-4s %-3s SKIP: no logo url\n", t.abbr, t.id)
+			skipped++
+			continue
+		}
+		src, err := download(client, t.logoURL)
+		if err != nil {
+			fmt.Printf("  %-4s %-3s SKIP: %v\n", t.abbr, t.id, err)
+			skipped++
+			continue
+		}
+		writeBoth(src, variantsDir, t.id)
+		fmt.Printf("  %-4s %-3s OK\n", t.abbr, t.id)
+		ok++
+	}
+	fmt.Printf("Done: %d updated, %d skipped\n", ok, skipped)
 }
 
 const mlbTeamsURL = "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams"
