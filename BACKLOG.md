@@ -20,28 +20,31 @@ The `fetch_nhl_assets.py` script requires `cairosvg` which needs the `libcairo2-
 ## Notes for next session
 **Last session ended 2026-06-05.**
 
-**Where we left off:** Scoped adding the **NBA** as a fully-supported league (Steve's request, off the MLB success). Confirmed Steve's hypothesis: NBA and WNBA are both ESPN `basketball` — same `site.api.espn.com/.../basketball/<league>/scoreboard` shape, `nba` vs `wnba`. NBA is the EASY league: it reuses the generic basketball scene, so NO new scene, NO `GameSnapshot` model changes, NO web-admin code (data-driven from `leagues` table), and the per-league layout toggle works as-is (unlike MLB). Full plan written to repo-root `NBA-PLAN.md` (~10 files). Awaiting Steve's go-ahead to kick off the engineer chain — nothing built yet, no commits this session.
+**Where we left off:** Backlog-grooming session, no code shipped. Steve walked the active list and confirmed four tickets were already done (or never-real); we verified each against ground truth before closing. Net effect is bookkeeping only — `BACKLOG.md` edits, no commits. Active list is now down to 4.
 
-**Picked up next:**
-1. **NBA addition (non-ticket thread — not yet a backlog #):** if Steve says go, route Phase 1 to the engineer chain per `NBA-PLAN.md`: `internal/sports/nba.go` (mirror `wnba.go`), register `"nba"` in `aggregator.go`, `--fetch-nba` flag in `cmd/scoreboard/main.go`, `runNBA()` in `cmd/fetch-logos`, migrations `011_enable_nba.sql` + `012_seed_nba_teams.sql`, `nba_test.go`. Engineer self-verifies (`go build`/`go test`/`--fetch-nba`/`--sim --once`) → test-engineer same run. Then Phase 2 host/Pi: `supabase db push`, regen NBA logos on Pi, `-tags matrix` build, Steve eyeballs panel. TWO open questions for Steve before starting: (a) combined PR vs. logos-split-out like MLB; (b) confirm deferring NBA-specific web-admin badge styling (plan defaults to deferring — NBA falls back to neutral accent colors). This is the FIRST real exercise of the Go-work routing rule (PR #27) — watch that the handoff shape holds.
-2. **#29** web-admin: GET /api/sports allows unauthenticated team enumeration (low, pre-existing; decide document-as-public vs wrap withAuth).
-3. **#30** web-admin: Next 15 warns on `return res.json()` in Pages Router API handlers (low/cosmetic; drop `return` before res.json() across src/pages/api/**).
-4. **#5** Pi deploy automation (Tailscale + Actions) — YAML/scripting half is agent-doable; only Tailscale/Pi wiring is host-side.
+**Picked up next:** (Steve's call on priority)
+1. **#29** web-admin: GET /api/sports allows unauthenticated team enumeration (low, pre-existing; decide document-as-public vs wrap `withAuth`). Pairs naturally with **#21** (lock global catalog tables sports/leagues/league_teams to read-only-for-authenticated via RLS) — do them together.
+2. **#20** E2E dashboard empty-state via a no-device QA user — **verify-before-working**: an `empty-states.spec.ts` already exists in `web-admin/e2e/`. It may already be covered (like #15 turned out to be). Check the spec's scope against the ticket before doing any work; could be a quick close.
+3. **#5** Automate Pi deploy via Tailscale + GitHub Actions — the YAML/scripting half is agent-doable; only the Tailscale/Pi wiring is host-side. Bigger lift; replaces the manual SSH `git pull`/build/run loop.
+
+**Non-ticket threads (don't mistake for backlog items):**
+- **`.test.ts` files are compiled into the API route tree** — `npm run build` emits `/api/device/[id]/config.test`, `index.test`, `sports.test`, etc. as real routes. Genuine minor issue, spotted while verifying #30. Steve was offered a ticket and the session ended before he answered — re-offer or just file it.
+- **Uncommitted on purpose:** `BACKLOG.md` (this session's closes) + `CLAUDE.md` (pre-existing edits from before the session) are both dirty in the working tree. Steve's explicit instruction: leave both as-is and let them ride in the next commit. Do NOT discard or separately commit them.
 
 **External state to remember:**
-- **Uncommitted working tree:** `BACKLOG.md` modified (last session's handoff-notes block, never committed — legit content) + `NBA-PLAN.md` untracked (this session's plan doc). Both should land in a tidy chore commit; `NBA-PLAN.md` is ephemeral scratch/plan, not durable docs. Neither committed — ask Steve before pushing.
-- Pi: SSH alias `led-scoreboard-3` (key auth, aarch64). DHCP IP drifts + mDNS flaky — re-check on SSH fail. Steve runs `sudo` for the hardware run himself.
-- **Go-work routing rule (PR #27, on main):** sim/test-verifiable go-scoreboard work → engineer; only `-tags matrix` build + on-panel check stay host/Pi. NOT a GPIO limitation — a provisioning gap (container lacks Pi SSH key + LAN route).
-- **Supabase migrations through 010**; NBA will be 011/012. Applied to remote via `supabase db push` (project linked). NBA row already seeded INACTIVE in `003_seed_data.sql` — 011 just flips `is_active=true` + sets 2025-26 season window (mid-Finals as of 2026-06-05, so set it active-now for live panel verification).
-- **Logos namespaced by league:** `assets/logos/variants/<league>/<id>_<variant>.png`; fetch-logos supports `--league wnba|nhl|mlb`, NBA adds `nba`. NBA/WNBA/MLB pull from ESPN; NHL reuses `assets/nhl_logos/`. Pi regenerates; Mac has wnba+mlb only.
-- CI runs strict `npm ci`; **codecov/patch gates coverage** — new uncovered branches fail the PR (hence `nba_test.go` in the plan). Forge container skips tsc + prettier — run locally before pushing forge-authored web-admin code.
+- **web-admin is on Next 15.5.19** (not 14.2.35 — a later bump past closed #27 already happened). tsc/eslint/build all clean on it.
+- **Supabase migrations through 012** (NBA enable + 30 teams applied to remote, project linked). Next migration is 013.
+- **Pi:** SSH alias `led-scoreboard-3` (key auth, aarch64); DHCP IP drifts + `.local` mDNS flaky — re-check on SSH fail. Steve runs `sudo` for hardware runs himself. Matrix build (`-tags matrix`) + on-panel check stay host/Pi (provisioning gap, not a GPIO limitation).
+- **forge `--project` gotcha:** `forge backlog` and `forge invoke` resolve project from cwd — a stray `cd web-admin` in a prior Bash call made `forge backlog close` fail ("BACKLOG.md not found at .../web-admin"). Pass `--project /Users/stevebargelt/code/pixtron` or run from repo root.
+- CI: strict `npm ci`; **codecov/patch + codecov/project both gate** — new uncovered branches fail the PR. Forge container skips tsc + prettier (run them explicitly per-brief).
 
-**Decisions worth not relitigating:**
-- **NBA reuses the generic basketball scene** — no dedicated scene (MLB needed `LiveBaseball` only because baseball has innings/count/bases; basketball is just score+clock like WNBA). No `GameSnapshot` changes, no MLB-style inert-layout-toggle hack.
-- **NBA data source = ESPN basketball scoreboard**, same precedent as MLB (ESPN over a league-specific StatsAPI).
-- **NBA web-admin = zero code changes** — the leagues directory is data-driven; the NBA row exists in the DB, the API and `DeviceTeamsTab` iterate over whatever the DB returns. Badge styling falls back to neutral accents; bespoke NBA colors deferred to a follow-up.
+**Decisions worth not relitigating (this session's closes):**
+- **#15 closed — solved via a DIFFERENT mechanism than the ticket proposed.** Authed flows are testable through a real QA account (`E2E_SUPABASE_EMAIL=qa@bargelt.com` in `web-admin/.env`) + Playwright: `e2e/global-setup.ts` does `signInWithPassword`, persists `storageState` to `.auth/qa.json`, reused across the authed suite (add-device, delete-device, device-settings-tab, empty-states, layout-picker, reorder-favorites, teams-save, auth-smoke). The originally-proposed `NEXT_PUBLIC_DEV_AUTH_BYPASS` mock-session flag was NEVER built and is unnecessary. Don't go build it.
+- **#11 closed — config-verified.** `~/.forge/workflows/feature.yml` build phase now fans out one child task per plan-step via `fanout.agent_map` (frontend→frontend-specialist, backend→backend-specialist, infosec→security-advisor, platform→agentic-platform-builder, engineer fallback). Exactly what the ticket asked for.
+- **#12 closed — taken on Steve's word, NOT independently config-verified.** Request-changes → rationale-fix-list is forge ENGINE reject/rework behavior, not workflow-YAML; not greppable from `~/.forge` config (no changelog present). Steve observed it fixed firsthand. If it ever regresses, this one has no config assertion to fall back on.
+- **#30 closed — does NOT reproduce.** On Next 15.5.19, `tsc --noEmit`, `next lint`, and `next build` are ALL clean on the `return res.json()` pattern. Mechanically can't warn: `NextApiResponse.json()` returns `void`, so `return res.status().json()` returns void, not a value. The ticket's premise was wrong/outdated. Don't churn the ~30 `return res.*` lines.
 
-**Shipped (for reference):** Nothing committed this session — orientation + NBA scoping + `NBA-PLAN.md` only. (Prior session, git-canonical: MLB end-to-end across GH PRs #24–#29, #8 closed/deferred.)
+**Shipped (for reference):** No code/commits this session — git log is unchanged. Bookkeeping only: closed #15, #11, #12, #30 with the rationales above.
 
 ## Active
 
@@ -51,27 +54,6 @@ The `fetch_nhl_assets.py` script requires `cairosvg` which needs the `libcairo2-
 - `scripts/deploy/{deploy,health-check,rollback}.sh` — written for the venv/pip deploy; rewrite for the static Go binary (`git pull` → `go build -tags matrix` → restart unit).
 - `scripts/install_rgbmatrix.sh` — builds the **Python** rgbmatrix bindings; the Go app only needs the C lib `librgbmatrix.a`. Reduce to building the C lib; drop the Python-binding + import-verify steps.
 - `scripts/hardware_self_test.sh` — python3-based matrix test; convert to a Go `--sim`/hardware check or drop.
-
-### #11 — Forge: feature build phase should dispatch per-discipline specialists, not one generic engineer
-Observed 2026-05-28 on the web-admin redesign (run-web-admin-redesign-honest-2-tab-device-config-8ecb5c). The tech-lead plan tagged each step discipline (steps 1-4 backend, 5-6 frontend), but the feature-ui-design-provided build phase dispatched ONE generic engineer for the whole wave; the discipline tags were unused for routing. CLAUDE.md describes the intent as "engineer (specialist per step)" — mismatch. Result: the generalist twice dropped frontend craft (a11y semantics, invalid disabled-on-datalist-option duplicate-favorites bug, skipped/ignored browser-tools visual verification). Ask: make the build phase fan out per the plan discipline tags (frontend-specialist for frontend steps, backend-specialist for backend), or document that build is intentionally single-engineer. This is a Forge tooling issue, not a scoreboard-app issue.
-
-
-### #12 — Forge: request-changes should drive the rationale fix-list, not a plan re-run
-Observed 2026-05-28, same run. After a build gate request-changes with a detailed fix-list rationale, the follow-up build/engineer task re-anchored on the PLAN (reported "all steps already implemented"), did a visual pass, and SKIPPED the rationale fix-list entirely — the reds re-flagged the identical a11y/validation/logging issues. Ask: when a step is sent back via request-changes, the re-run task input should foreground the rationale fix-list as the work to do, not just re-run against the original plan. Forge tooling issue.
-
-
-### #15 — Dev/QA auth bypass for web-admin (so authed flows are actually testable)
-PROBLEM (root cause of the 2026-05-28 login breakage): the web-admin requires a real Supabase Auth session. Forge specialist containers have no session, so (a) their browser-tools visual verification only ever renders the login page — every authenticated screen (dashboard populated, device Teams/Settings, admin) goes visually UNVERIFIED; and (b) to make their container dev server boot, a specialist wrote web-admin/.env.local with NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co. Because /project is mounted rw, that file leaked onto the real machine and overrode web-admin/.env, breaking local login (browser posted to placeholder.supabase.co/auth/v1/token). Fixed for now by deleting the placeholder .env.local (web-admin/.env has the real creds).
-
-PROPOSED FIX — a dev-only auth bypass:
-- A mock-session path gated behind an env flag (e.g. NEXT_PUBLIC_DEV_AUTH_BYPASS=true) that injects a fake authenticated session (and optionally a couple of mock devices) so the app renders authed views WITHOUT a real Supabase session.
-- HARD prod-safety: the bypass must be impossible to enable in production (guard on NODE_ENV !== production AND the explicit flag; never default-on).
-- Document it in CLAUDE.md Stack section — the forge frontend-specialist seed explicitly checks there for "dev auth instructions (bypass env vars, test credentials, mock auth setup)." With it documented, specialists set the flag in-container, render authed screens, and do REAL visual verification — no need to touch Supabase config, no .env.local leak.
-
-ALSO: instruct specialist passes to NEVER create/modify web-admin/.env.local (it is the real local config). Consider adding web-admin/.env.local.example with placeholders + a note, but never write a real/placeholder .env.local in automation.
-
-This is what makes the rest of the redesign actually verifiable.
-
 
 ### #20 — E2E: dashboard empty-state test via a dedicated no-device QA user
 Follow-up from the E2E suite build. The empty-state assertion ('No devices yet') conflicts with the per-test device-seeding fixture in the same auth context. Clean answer: a SEPARATE QA user that owns zero devices, with its own storageState, so the empty-state test isn't fighting the seed/sweep used by the device-owning QA user (qa@bargelt.com). Small: add a second programmatic login (e.g. qa-empty@bargelt.com) in globalSetup writing a second storageState, and one spec using that project/state asserting the empty-state dashboard renders. Deferred intentionally during the fixture + add-device + teams-save batch.
@@ -104,7 +86,11 @@ Decision needed:
 Severity: low (residual risk, confidence ~0.7). No action is strictly required for #27; filing so the decision is explicit and tracked.
 
 
+## Done (recent)
+
 ### #30 — web-admin: Next 15 warns on 'return res.json()' in Pages Router API handlers
+**Closed:** 2026-06-05.
+
 Surfaced by test-engineer during the #27 Next.js 15 upgrade (PR #21). Introduced by the bump; warning only, NO functional impact (all API routes respond correctly and all 193 tests pass).
 
 Next.js 15 logs `[WebServer] API handler should not return a value, received object.` because the Pages Router API routes use `return res.status(N).json(...)`, which returns the NextApiResponse object. Next 15 now warns when a handler returns a non-undefined value.
@@ -114,7 +100,32 @@ Fix: drop the `return` keyword before `res.json()` / `res.status().json()` calls
 Severity: low / cosmetic. Route through Forge (engineer) when convenient; bundle with other API-route touch-ups if any come up.
 
 
-## Done (recent)
+### #12 — Forge: request-changes should drive the rationale fix-list, not a plan re-run
+**Closed:** 2026-06-05.
+
+Observed 2026-05-28, same run. After a build gate request-changes with a detailed fix-list rationale, the follow-up build/engineer task re-anchored on the PLAN (reported "all steps already implemented"), did a visual pass, and SKIPPED the rationale fix-list entirely — the reds re-flagged the identical a11y/validation/logging issues. Ask: when a step is sent back via request-changes, the re-run task input should foreground the rationale fix-list as the work to do, not just re-run against the original plan. Forge tooling issue.
+
+
+### #11 — Forge: feature build phase should dispatch per-discipline specialists, not one generic engineer
+**Closed:** 2026-06-05.
+
+Observed 2026-05-28 on the web-admin redesign (run-web-admin-redesign-honest-2-tab-device-config-8ecb5c). The tech-lead plan tagged each step discipline (steps 1-4 backend, 5-6 frontend), but the feature-ui-design-provided build phase dispatched ONE generic engineer for the whole wave; the discipline tags were unused for routing. CLAUDE.md describes the intent as "engineer (specialist per step)" — mismatch. Result: the generalist twice dropped frontend craft (a11y semantics, invalid disabled-on-datalist-option duplicate-favorites bug, skipped/ignored browser-tools visual verification). Ask: make the build phase fan out per the plan discipline tags (frontend-specialist for frontend steps, backend-specialist for backend), or document that build is intentionally single-engineer. This is a Forge tooling issue, not a scoreboard-app issue.
+
+
+### #15 — Dev/QA auth bypass for web-admin (so authed flows are actually testable)
+**Closed:** 2026-06-05.
+
+PROBLEM (root cause of the 2026-05-28 login breakage): the web-admin requires a real Supabase Auth session. Forge specialist containers have no session, so (a) their browser-tools visual verification only ever renders the login page — every authenticated screen (dashboard populated, device Teams/Settings, admin) goes visually UNVERIFIED; and (b) to make their container dev server boot, a specialist wrote web-admin/.env.local with NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co. Because /project is mounted rw, that file leaked onto the real machine and overrode web-admin/.env, breaking local login (browser posted to placeholder.supabase.co/auth/v1/token). Fixed for now by deleting the placeholder .env.local (web-admin/.env has the real creds).
+
+PROPOSED FIX — a dev-only auth bypass:
+- A mock-session path gated behind an env flag (e.g. NEXT_PUBLIC_DEV_AUTH_BYPASS=true) that injects a fake authenticated session (and optionally a couple of mock devices) so the app renders authed views WITHOUT a real Supabase session.
+- HARD prod-safety: the bypass must be impossible to enable in production (guard on NODE_ENV !== production AND the explicit flag; never default-on).
+- Document it in CLAUDE.md Stack section — the forge frontend-specialist seed explicitly checks there for "dev auth instructions (bypass env vars, test credentials, mock auth setup)." With it documented, specialists set the flag in-container, render authed screens, and do REAL visual verification — no need to touch Supabase config, no .env.local leak.
+
+ALSO: instruct specialist passes to NEVER create/modify web-admin/.env.local (it is the real local config). Consider adding web-admin/.env.local.example with placeholders + a note, but never write a real/placeholder .env.local in automation.
+
+This is what makes the rest of the redesign actually verifiable.
+
 
 ### #8 — Live snapshot from device — replaces removed Canvas preview
 **Closed:** 2026-06-04.

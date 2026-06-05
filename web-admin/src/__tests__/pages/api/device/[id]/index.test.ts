@@ -105,7 +105,7 @@ async function loadHandler() {
   let handler: ((req: NextApiRequest, res: NextApiResponse) => Promise<any>) | undefined
 
   await jest.isolateModulesAsync(async () => {
-    handler = (await import('./index')).default
+    handler = (await import('@/pages/api/device/[id]/index')).default
   })
 
   if (!handler) throw new Error('Failed to load handler')
