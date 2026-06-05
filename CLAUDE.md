@@ -68,7 +68,7 @@ go build -o scoreboard ./cmd/scoreboard
 go build -tags matrix -o scoreboard-matrix ./cmd/scoreboard
 sudo ./scoreboard-matrix             # GPIO needs root
 
-# Useful flags: --fetch-wnba --fetch-nhl --fetch-config --demo-leagues=wnba,nhl,mlb
+# Useful flags: --fetch-wnba --fetch-nhl --fetch-nba --fetch-config --demo-leagues=wnba,nhl,mlb,nba
 #               --demo-baseball --env <path> --assets-dir <path> --tick-ms N --once
 ```
 
@@ -88,8 +88,8 @@ sudo ./scoreboard-matrix             # GPIO needs root
   stays clean and that workaround is unnecessary.)
 - **Logos are gitignored** (root `.gitignore` swallows all `assets/`) and live only on the Pi.
   They are white silhouettes by default; regenerate color variants with
-  `go run ./cmd/fetch-logos --assets-dir ../assets` (WNBA), or add `--league nhl` / `--league mlb`
-  for the other leagues. Variants are namespaced by league on disk:
+  `go run ./cmd/fetch-logos --assets-dir ../assets` (WNBA), or add `--league nhl` / `--league mlb` /
+  `--league nba` for the other leagues. Variants are namespaced by league on disk:
   `assets/logos/variants/<league>/<id>_<variant>.png`. Fonts, by contrast, are
   committed and `//go:embed`ed from `internal/render/assets/` (a local `.gitignore` override
   re-includes them).
@@ -121,7 +121,7 @@ npm run type-check       # tsc --noEmit
 
 ## Database
 
-Supabase (Postgres + RLS). All migrations live in `supabase/migrations/` (001–010). Apply via the Supabase CLI (project already linked):
+Supabase (Postgres + RLS). All migrations live in `supabase/migrations/` (001–012). Apply via the Supabase CLI (project already linked):
 
 ```bash
 supabase db push
