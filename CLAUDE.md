@@ -15,7 +15,7 @@ Web admin (`web-admin/`, Next.js) writes device config to Supabase; the device p
 └─────────────┘     └──────────────┘     └──────────────┘
 ```
 
-No agents, WebSockets, or edge functions. The Go app polls Supabase for config; ESPN/NHL APIs for game data.
+The Go app polls Supabase for config; ESPN/NHL APIs for game data.
 
 ## Go Scoreboard (ACTIVE rewrite — read this first)
 
@@ -142,9 +142,6 @@ DEVICE_ID=your-device-uuid
 ```bash
 SIMULATION_MODE=true          # Force simulation (no hardware)
 DEMO_MODE=true                # Run with fake games
-TIMEZONE=America/New_York     # Override timezone (Python only — Go uses system TZ)
-BRIGHTNESS=75                 # LED brightness (1-100) (Python only — Go hardcoded)
-MATRIX_PIXEL_MAPPER_CONFIG=Rotate:180  # Python only — Go hardcoded
 ```
 
 ## Code Conventions
@@ -179,30 +176,14 @@ MATRIX_PIXEL_MAPPER_CONFIG=Rotate:180  # Python only — Go hardcoded
 2. Check current season dates in `leagues` table
 3. Run with `--demo` (Go) to isolate API issues — note: `--demo` is still network-connected and calls real ESPN/NHL endpoints; it just synthesizes the league mix
 
-## Do's and Don'ts
+## Guidelines
 
-### DO:
-- Use direct Supabase queries (no WebSockets)
-- Follow existing code patterns and conventions
-- Test in simulation mode before hardware (`--sim --once` on Go)
-- Check environment variables are set
-- Apply database migrations with `supabase db push`
-
-### DON'T:
-- Add WebSocket/realtime subscriptions
-- Create edge functions
-- Use device tokens or agent authentication
-- Add unnecessary comments to code
-- Create new files unless absolutely necessary
-- Sign commits with AI/LLM references
-
-## Do Not Section
-- Do not commit directly to the `main` branch.
-- Do not sign or mention Claude, Claude Code, Anthropic, LLM, AI, ML in any commit messages or PR text.
-- Always prefer editing an existing file to creating a new one.
-
-## Always Do Section
-Always use conventional commits https://www.conventionalcommits.org/en/v1.0.0/ and https://gitmoji.dev when creating branches, commit messages, pr messages
+- Follow existing code patterns and conventions.
+- Test in simulation mode before hardware deployment (`--sim --once`).
+- Check that required environment variables are set.
+- Prefer editing existing files over creating new ones.
+- Use conventional commits (conventionalcommits.org) and gitmoji (gitmoji.dev) for all branch names, commit messages, and PR text.
+- Never commit directly to main — branch first.
 
 <!-- forge:orchestrator-start -->
 
@@ -236,7 +217,7 @@ You behave like a tech lead in a dev team. The user is the product owner; you co
 **The principle that resolves anything not listed: ephemeral working-state → you edit it directly; durable operator-/engineer-facing prose → route to the documentation-maintainer.**
 
 **Stays orchestrator-direct** (ephemeral working-state):
-- `BACKLOG.md` (via `forge backlog` CLI, not Edit/Write)
+- Backlog state — `backlog/` dir (structured) or `BACKLOG.md` (legacy) — via `forge backlog` CLI, not Edit/Write
 - Session handoff notes and very small status notes
 - Routing instructions / task briefs (the prompts you author *for* agents)
 - Temporary scratch notes and drafts you create as session artifacts
@@ -277,7 +258,7 @@ Do NOT invoke manual-qa for refactors, CLI-only changes, or backend-only work �
 
 ## Session start
 
-If this project has a BACKLOG.md, orient with the `forge backlog` CLI — it's ~30x cheaper than reading the file whole:
+Orient with the `forge backlog` CLI — it's ~30x cheaper than reading backlog files directly:
 
 ```
 forge backlog notes show               # narrative handoff from last session
@@ -285,7 +266,7 @@ forge backlog list --status active     # open tickets (titles only)
 forge backlog show <id>                # full body when you need one
 ```
 
-Only read BACKLOG.md whole if you genuinely need cross-ticket scanning. `forge backlog --help` lists the write verbs (`file`, `close`, `move`, `notes add`, `notes replace`).
+Notes are stored at `backlog/notes.md` (structured format) or in the `BACKLOG.md` notes block (legacy). The CLI handles both automatically. `forge backlog --help` lists the write verbs (`file`, `close`, `move`, `notes add`, `notes replace`).
 
 ## How to handle every request
 
@@ -334,6 +315,7 @@ The expert escape hatch (hand-edit the RACI file + `forge raci validate`, or a f
 ### Step 3 — Present the plan
 
 For any non-trivial routing (anything that spawns a container), tell the user concretely:
+- The **resolved route** from Step 2 — route key · `path` · `responsible` · `required_followups` · `source` (`host`/`project`). This makes the routing basis visible *before* anything spawns; if you can't state it, you skipped Step 2 — go back.
 - Which agent(s) will run
 - The brief / task description you'd pass
 - What "done" looks like
@@ -343,6 +325,10 @@ Wait for explicit confirmation. The user can revise; you re-present until they s
 **Skip this step for in-session work types** (`orientation`, `meta`, `ticketing`, `strategy` / `planning` without consults). Just do them and report.
 
 ### Step 4 — Execute the route
+
+**Hard precondition — resolve the route first (#287). This gates every dispatch below.** Before any `forge invoke` or `forge new`, you MUST have run `forge route explain <route-key> --json` for the classified work type **in this same turn** (Step 2) and presented the resolved route (Step 3). Dispatching a role from memory — jumping straight to `forge invoke engineer` because it "obviously" fits — is a **defect, not a shortcut**: it silently bypasses project routing overrides and any routing-policy change, so the governance dashboard and `route explain` can be correct while the actual work ignores them (this is the Pixtron regression #287 was filed for). A direct `forge invoke <role>` is **invalid unless the route was just resolved from the compiled policy.** If you are about to invoke without a just-resolved route, STOP and run Step 2. (`in-session` work types — `orientation` / `meta` / `ticketing` — are exempt: they spawn no container and have no route to resolve.)
+
+**Carry the resolved key mechanically (#297).** Pass `--route <route-key>` (the key you just resolved in Step 2) to `forge invoke` / `forge new`. The CLI validates it against the compiled policy and a bare dispatch with no `--route` warns loudly before spawning — this is the tool-level backstop for the prose rule above. Only for a genuinely unrouted dispatch (a rare, deliberate exception) pass `--unrouted` to acknowledge it.
 
 **For `in-session` work:** do it directly in the conversation. Use `forge backlog file/close/move` for ticket changes; edit ephemeral working-state (session notes, briefs, scratch) directly. Durable docs route to the `documentation-maintainer` (see the allowlist split above) — not edited inline here. Answer the question. No container, no run row.
 
@@ -509,6 +495,23 @@ forge invoke test-engineer --task "write integration tests for src/v2/spawn.ts �
 
 The pattern: ONE invoke per agent, chained or parallelized by you. Forge doesn't manage the composition — you do, in the conversation.
 
+### Reviewing implemented work — use the bounded review-loop, not a manual relay (#301)
+
+Once an implementation's **initial commit/range has landed**, you review it with the bounded `forge review-loop` command — **do NOT hand-relay reviewer→fixer cycles** (manually invoking `red-wide` then `engineer` then `red-wide` again). That relay is exactly what the loop automates.
+
+```bash
+forge review-loop <ticket-id> --max-rounds 2 --route <resolved-route>
+# or pin the range explicitly:  --since <sha>
+```
+
+Rules:
+- **Post-implementation ONLY.** `review-loop` reviews already-committed work — it is NOT for the initial implementation. You still own route resolution and the first implementation dispatch (for Forge-on-Forge, the first implementation you do directly), and you commit it before looping.
+- **Present before you start the loop:** ticket id, route key, commit range (or `--since`), max rounds, the reviewer/fixer roles (`red-wide` read-only / `engineer`), and the stop conditions. (`forge review-loop … --dry-run` prints exactly this.)
+- **Don't manually relay** reviewer/fixer when `review-loop` is available. The manual `red-wide` → `engineer` chain is the **fallback** only.
+- **Stop and ask the user** when the loop stops on `blocked_by_reviewer` or `needs_fix_max_rounds`, or whenever the work would need live spend, a credential, a live DB migration, a destructive operation, or a product/acceptance decision. The loop never auto-does any of those.
+- **Close the ticket only when** `review-loop` reports `closeable` (reviewer `pass` AND deterministic verification green). Never close on a non-`passed` stop reason.
+- **Fallback:** if `review-loop` is unavailable or fails structurally (not a normal verdict — e.g. `reviewer_failed`), present the manual review result to the user rather than silently looping by hand.
+
 ## Available workflows (pipeline only)
 
 Implementation work goes through the pipeline. There are three feature workflow variants:
@@ -589,6 +592,7 @@ forge notify milestone --run "$RID" --kind batch_complete \
 - **Don't poll with `Bash`.** Use `forge watch` or wait. Polling burns context tokens.
 - **Don't make the user click "Run Next" in the dashboard.** That's your job — call `forge next` after each gate decision.
 - **Don't speculate about what a step will produce.** Wait for the actual output, read it, then advise.
+- **Don't dispatch from memory.** Every `forge invoke` / `forge new` for routed work must be preceded by a `forge route explain <route-key> --json` resolution in the same turn (Step 2), with the route summary presented (Step 3). Routing from habit silently bypasses project overrides and routing-policy changes — the #287 Pixtron regression. A direct `forge invoke <role>` with no just-resolved route is a defect.
 - **Don't run agent containers manually via `docker run`.** Always go through `forge invoke` or `forge new`.
 - **Don't reach for the pipeline when a single invoke would do.** Most non-implementation work is one or two invokes, not a feature run.
 - **Don't mention Claude or Anthropic in commits, PRs, issues, or any github-bound message.** No `Co-Authored-By: Claude` trailer. No "🤖 Generated with Claude Code" signature. No mentioning "Claude", "Anthropic", or "Claude Code" in commit messages, PR titles, PR bodies, issue bodies, or issue comments. Write as a human author would. AI tooling is implementation detail, not public record. See the `no-ai-attribution` force-level constraint for the full rule.
