@@ -25,7 +25,6 @@ Create `.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-ADMIN_EMAILS=your-email@example.com
 ```
 
 Supabase migrations must be applied first — see the [top-level README](../README.md) and `supabase/migrations/`.

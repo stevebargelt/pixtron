@@ -14,12 +14,14 @@ Values you'll need from Supabase Dashboard → Settings → API:
 
 - `SUPABASE_URL` (e.g. `https://abcdef.supabase.co`)
 - `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY` (only used server-side by the web admin)
+- `SUPABASE_SERVICE_ROLE_KEY` (secret — used server-side by the web admin and by `scripts/run_supabase_migrations.sh`; the device never reads it)
 
 Where they go:
 
-- **Web admin** (`web-admin/.env.local`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_EMAILS`
+- **Web admin** (`web-admin/.env.local`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 - **Device** (`.env` on the Pi): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, plus `DEVICE_ID` (obtained after registering the device via the web admin)
+
+See `.env.example` for the full device-side surface. Everything else about the device — brightness, timezone, refresh intervals, layout — lives in the `device_config` table and is edited via the web admin, not the environment.
 
 ## Step 2: Run migrations
 
