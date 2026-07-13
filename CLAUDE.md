@@ -17,12 +17,13 @@ Web admin (`web-admin/`, Next.js) writes device config to Supabase; the device p
 
 The Go app polls Supabase for config; ESPN/NHL APIs for game data.
 
-## Go Scoreboard (ACTIVE rewrite — read this first)
+## Go Scoreboard (read this first)
 
-The Python app (`src/`, `app.py`) is **frozen**. Active development of the live-rendering
-scoreboard happens in **`go-scoreboard/`** (Go). It produces a single static binary, which
-solved the Python dependency pain on the Pi (venv, pip, Pillow C headers, rgbmatrix build
-failures). The web admin (`web-admin/`) and Supabase schema are unchanged and shared by both.
+The live-rendering scoreboard is **`go-scoreboard/`** (Go) — the only implementation. It began as
+a rewrite of an earlier Python app, which was removed once the Go app took over; the driver was
+Python's dependency pain on the Pi (venv, pip, Pillow C headers, rgbmatrix build failures), which a
+single static Go binary eliminates. The web admin (`web-admin/`) and Supabase schema are shared with
+it and were unchanged by the rewrite.
 
 ### This project is different from most Forge projects
 - **Split Go scoreboard work by whether it needs the panel — don't blanket-exempt it from agents.**
@@ -97,11 +98,15 @@ sudo ./scoreboard-matrix             # GPIO needs root
   Use `sports.parseEventTime` (handles both layouts) — a raw `time.Parse(time.RFC3339, ...)`
   silently yields the zero time, which renders as a bogus "4:07 PM" in `America/Los_Angeles`.
 - **`.local` mDNS is flaky from the Mac**; prefer the IP/alias and re-check on connection failure.
-- **Device-config fields not yet honored by the Go app**: `matrix_config` (size/brightness/
-  mapper), `render_config` (layout/logo variant), and `timezone` are read but ignored — the app
-  uses hardcoded matrix settings, stacked+mini rendering, and the Pi's system TZ. Only
-  `enabled_leagues`, `favorite_teams`, and `refresh_config` actually drive behavior. Don't expose
-  the ignored settings in the web UI as if they work.
+- **Device-config fields not honored by the Go app.** Most of the config now drives behavior:
+  `enabled_leagues` (including each league's `display_layout`, applied per-league in
+  `currentScene`), `favorite_teams`, `refresh_config`, `matrix_config.brightness` (pushed to the
+  panel via `SetBrightness` on every config reload), and `timezone` (system TZ is only the
+  fallback when the name doesn't resolve). Still read-but-ignored: the rest of `matrix_config`
+  (width/height/pixel mapper — hardcoded in `internal/display/matrix.go`) and `render_config`
+  (`live_layout`, `logo_variant`). `priority_config` and `game_overrides` aren't in the
+  `DeviceConfig` struct at all, so they're never even parsed. Don't expose those inert settings in
+  the web UI as if they work.
 - The Go module's `go` directive is `1.25.0`; the Pi runs Go 1.26.x and builds it fine.
 
 ## Web Admin (`web-admin/`)
@@ -138,11 +143,9 @@ SUPABASE_ANON_KEY=your-anon-key
 DEVICE_ID=your-device-uuid
 ```
 
-### Optional
-```bash
-SIMULATION_MODE=true          # Force simulation (no hardware)
-DEMO_MODE=true                # Run with fake games
-```
+These three are the only environment variables the Go app reads. Simulation and demo modes are
+**flags**, not env vars — see `--sim`, `--demo-leagues`, `--demo-live-big`, `--demo-baseball` under
+"Build & run".
 
 ## Code Conventions
 
@@ -174,7 +177,11 @@ DEMO_MODE=true                # Run with fake games
 ### No games displaying
 1. Verify sports are enabled in `device_leagues`
 2. Check current season dates in `leagues` table
-3. Run with `--demo` (Go) to isolate API issues — note: `--demo` is still network-connected and calls real ESPN/NHL endpoints; it just synthesizes the league mix
+3. Run with `--demo-leagues=wnba,nhl` (Go) to isolate *Supabase/config* problems — it bypasses
+   Supabase and takes the league list from the flag, but still calls the real ESPN/NHL endpoints,
+   so it will not rule out an upstream API problem. To take the network out entirely, use
+   `--demo-live-big` or `--demo-baseball`, which render a synthetic game with no network calls: if
+   those draw and `--demo-leagues` doesn't, the fault is in fetching, not rendering.
 
 ## Guidelines
 
@@ -602,6 +609,6 @@ forge notify milestone --run "$RID" --kind batch_complete \
 ## Stack + project context
 
 - **Project**: Multi-League LED Scoreboard — live sports scores on RGB LED matrix
-- **Stack**: Go (active live-render, `go-scoreboard/`) · Next.js 14 + TypeScript (web admin) · Supabase Postgres + RLS · Python (frozen, `src/`)
+- **Stack**: Go (live-render, `go-scoreboard/`) · Next.js 14 + TypeScript (web admin) · Supabase Postgres + RLS
 - **Where work tracking lives**: `BACKLOG.md` via `forge backlog` CLI
 - **Project-specific gate**: Go scoreboard work bypasses the Forge pipeline (Pi hardware not reachable from containers) — see "Go Scoreboard" section above
