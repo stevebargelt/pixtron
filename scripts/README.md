@@ -2,7 +2,7 @@
 
 Hardware setup + deploy helpers for the Multi-League LED Scoreboard.
 
-> **Note:** Most of the Python helpers that used to live in this directory (asset fetchers, migration runners, device setup, test connection) are scheduled for removal as part of the Python codebase cleanup. See the open backlog ticket for "Remove frozen Python scoreboard codebase."
+> **Note:** Most of the Python helpers that used to live in this directory (asset fetchers, migration runners, device setup, test connection) are scheduled for removal as part of the Python codebase cleanup. Work is tracked in GitHub Issues.
 
 ## Currently active
 

@@ -56,14 +56,14 @@ supabase/supabase/.temp/
 
 plans/
 
-# forge — per-developer claude-code config (machine-local, not committed)
+# per-developer Claude Code config (machine-local, not committed)
 .claude/settings.local.json
 .claude/commands/
 
 # Watchman temp cookies (never commit)
 .watchman-cookie-*
 
-# beads tracker state (using forge backlog / BACKLOG.md here)
+# beads tracker state
 .beads/
 
 # CLI / runtime scratch
