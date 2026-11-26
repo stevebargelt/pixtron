@@ -31,7 +31,7 @@ Every frame is duplicated with a `(dark)` variant for explicit theme parity.
 
 ---
 
-## 3. Hard architectural constraints (unchanged from CLAUDE.md)
+## 3. Hard architectural constraints (unchanged from AGENTS.md)
 
 - **Polling only** — no WebSockets, no realtime subscriptions, no edge functions.
 - **No device tokens** — RLS enforces ownership; the device authenticates with the anon key + `DEVICE_ID`. The token-minting flow is **cut entirely** (see §6.3).
