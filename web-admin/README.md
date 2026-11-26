@@ -88,7 +88,7 @@ The admin is **mid-redesign**. Known issues being addressed:
 - Device-creation flow has stale references to a deprecated `DEVICE_TOKEN` minting edge function.
 - Client-side Canvas preview drifts from the Go renderer (fonts wrong, pregame layout stale).
 
-Active backlog tickets cover the redesign plan and individual bug fixes.
+Work is tracked in GitHub Issues.
 
 ## Contributing
 
