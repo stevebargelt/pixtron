@@ -32,12 +32,12 @@ No WebSockets, no edge functions, no realtime subscriptions. The device polls. S
 
 | Path | What it is |
 |------|-----------|
-| `go-scoreboard/` | The Go scoreboard binary that runs on the Pi. See **CLAUDE.md** for the dev process and hardware setup. |
+| `go-scoreboard/` | The Go scoreboard binary that runs on the Pi. See **AGENTS.md** for the dev process and hardware setup. |
 | `web-admin/` | Next.js admin interface. See `web-admin/README.md` for setup. |
-| `supabase/migrations/` | Database schema (12 migration files). Apply with `supabase db push` (Supabase CLI). |
+| `supabase/migrations/` | Database schema (numbered SQL migrations; list in `supabase/migrations/README.md`). Apply with `supabase db push` (Supabase CLI). |
 | `assets/` | Team logos and pixel fonts (logos are gitignored; fetched on the Pi). |
 | `scripts/` | Hardware setup helpers (mostly shell). |
-| `CLAUDE.md` | Detailed dev process: Go scoreboard, Pi hardware, dev loop, gotchas. **Read this first if you're working on the device.** |
+| `AGENTS.md` | Detailed dev process: Go scoreboard, Pi hardware, dev loop, gotchas. **Read this first if you're working on the device.** |
 
 ## Quick Start
 
@@ -70,10 +70,10 @@ Sign up, then register your first device. The admin gives you a `DEVICE_ID` to p
 
 ### 3. Device (Go scoreboard on the Pi)
 
-See **CLAUDE.md → Go Scoreboard** for the full Pi setup (hardware prerequisites, `librgbmatrix` install, blacklisted modules, exact dev loop). Short version:
+See **AGENTS.md → Go Scoreboard** for the full Pi setup (hardware prerequisites, `librgbmatrix` install, blacklisted modules, exact dev loop). Short version:
 
 ```bash
-# On the Pi (after Go and librgbmatrix are installed — see CLAUDE.md):
+# On the Pi (after Go and librgbmatrix are installed — see AGENTS.md):
 cd go-scoreboard
 go build -tags matrix -o scoreboard-matrix ./cmd/scoreboard
 
@@ -90,7 +90,7 @@ For simulator development (no hardware), build without `-tags matrix` and run `.
 - RGB LED matrix panel(s): currently tested with 2× 32×32 panels chained, rotated 180°
 - 5V/3A+ power supply
 
-`snd_bcm2835` must be blacklisted on the Pi for hardware PWM; without it the panel renders with artifacts. CLAUDE.md has the exact procedure and panel config.
+`snd_bcm2835` must be blacklisted on the Pi for hardware PWM; without it the panel renders with artifacts. AGENTS.md has the exact procedure and panel config.
 
 ## Supported Leagues
 
@@ -111,7 +111,7 @@ For simulator development (no hardware), build without `-tags matrix` and run `.
 ## Contributing
 
 1. Branch off `main` with a conventional-commit name (`feat/...`, `fix/...`, `chore/...`).
-2. For Go device changes, see CLAUDE.md's "Go Scoreboard" section.
+2. For Go device changes, see AGENTS.md's "Go Scoreboard" section.
 3. For web admin: `cd web-admin && npm run dev && npm run test && npm run lint`.
 4. Open a PR — do not commit directly to `main`.
 
