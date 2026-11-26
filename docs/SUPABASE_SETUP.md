@@ -32,7 +32,7 @@ supabase link --project-ref YOUR_PROJECT_REF
 supabase db push
 ```
 
-This applies all 10 migrations in order (001–010). Requires the database password shown at project creation.
+This applies all 13 migrations in order (001–013). Requires the database password shown at project creation.
 
 ### Verify
 

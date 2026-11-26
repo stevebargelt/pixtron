@@ -6,7 +6,7 @@ This directory contains SQL migrations for the LED Scoreboard's direct Supabase 
 
 ## Migration Structure
 
-There are **10 migrations** in `migrations/` (001–010). See `migrations/README.md` for the full list.
+There are **13 migrations** in `migrations/` (001–013). See `migrations/README.md` for the full list.
 
 ## Quick Start
 
