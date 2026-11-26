@@ -34,7 +34,7 @@ No WebSockets, no edge functions, no realtime subscriptions. The device polls. S
 |------|-----------|
 | `go-scoreboard/` | The Go scoreboard binary that runs on the Pi. See **AGENTS.md** for the dev process and hardware setup. |
 | `web-admin/` | Next.js admin interface. See `web-admin/README.md` for setup. |
-| `supabase/migrations/` | Database schema (12 migration files). Apply with `supabase db push` (Supabase CLI). |
+| `supabase/migrations/` | Database schema (numbered SQL migrations; list in `supabase/migrations/README.md`). Apply with `supabase db push` (Supabase CLI). |
 | `assets/` | Team logos and pixel fonts (logos are gitignored; fetched on the Pi). |
 | `scripts/` | Hardware setup helpers (mostly shell). |
 | `AGENTS.md` | Detailed dev process: Go scoreboard, Pi hardware, dev loop, gotchas. **Read this first if you're working on the device.** |
