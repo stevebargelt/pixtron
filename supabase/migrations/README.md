@@ -1,6 +1,6 @@
 # Database Migrations
 
-There are **10 migrations** that set up the entire database. Apply them with the Supabase CLI (the project is already linked):
+There are **13 migrations** that set up the entire database. Apply them with the Supabase CLI (the project is already linked):
 
 ```bash
 supabase db push
@@ -18,6 +18,9 @@ supabase db push
 8. **`008_drop_text_device_config_overload.sql`** — Resolves a function overload conflict
 9. **`009_enable_mlb.sql`** — Activates MLB league for the 2026 season
 10. **`010_seed_mlb_teams.sql`** — Seeds all 30 MLB teams
+11. **`011_enable_nba.sql`** — Activates the NBA league
+12. **`012_seed_nba_teams.sql`** — Seeds all 30 NBA teams
+13. **`013_catalog_read_only.sql`** — Makes `sports`, `leagues` and `league_teams` read-only for app users (writes via service role only)
 
 ## What Gets Created
 

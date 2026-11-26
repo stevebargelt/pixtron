@@ -1,52 +1,18 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { createClient } from '@supabase/supabase-js'
 import fs from 'fs/promises'
 import path from 'path'
+import { getAdminClient, withAuth } from '@/lib/auth'
 
-// Server-side: use service role if available to read league_teams regardless of session
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', ['GET'])
     return res.status(405).json({ error: `Method ${req.method} not allowed` })
   }
   try {
-    let data: any[] | null = null
-    let error: any = null
-
-    if (supabaseUrl && serviceKey) {
-      // Preferred: use service role on the server
-      const admin = createClient(supabaseUrl, serviceKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-      })
-      const resp = await admin
-        .from('league_teams')
-        .select('team_id, name, abbreviation, conference, division, is_active, leagues(code)')
-        .eq('is_active', true)
-      data = resp.data
-      error = resp.error
-    } else if (supabaseUrl && anonKey) {
-      // Fallback: rely on RLS and a user JWT forwarded via Authorization
-      const authHeader = req.headers.authorization
-      if (!authHeader) {
-        return res.status(401).json({ error: 'Unauthorized: sign in required to list teams' })
-      }
-      const userClient = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: authHeader } },
-        auth: { autoRefreshToken: false, persistSession: false },
-      })
-      const resp = await userClient
-        .from('league_teams')
-        .select('team_id, name, abbreviation, conference, division, is_active, leagues(code)')
-        .eq('is_active', true)
-      data = resp.data
-      error = resp.error
-    } else {
-      return res.status(500).json({ error: 'Server misconfigured: missing Supabase env' })
-    }
+    const { data, error } = await getAdminClient()
+      .from('league_teams')
+      .select('team_id, name, abbreviation, conference, division, is_active, leagues(code)')
+      .eq('is_active', true)
 
     if (error) {
       console.error('sports API DB error:', error.message)
@@ -56,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const grouped: Record<string, any[]> = Object.fromEntries(supportedSports.map(s => [s, []]))
 
     if (data && data.length > 0) {
-      for (const row of data) {
+      for (const row of data as any[]) {
         const sport = String(row.leagues?.code || '')
         if (!grouped[sport]) continue
         grouped[sport].push({
@@ -129,3 +95,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Internal server error' })
   }
 }
+
+export default withAuth(handler)
